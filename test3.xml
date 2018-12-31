@@ -1,0 +1,101 @@
+<dia:diagram xmlns:dia="http://www.lysator.liu.se/~alla/dia/">
+  <dia:diagramdata>
+    <dia:attribute1 name="background">
+      <dia:color val="#ffffff"/>
+      <? pi example 20<30 ?> 
+    </dia:attribute1>
+  </dia:diagramdata>
+  <dia:layer name="Background" visible="true">
+    <dia:object1 type="Standard - Line" version="0" id="O0">
+      <dia:attribute2 name="obj_pos">
+        <dia:point val="1.95,6.85"/>
+        <!--  comment-example prize<100 -->
+      </dia:attribute2>
+      <dia:attribute3 name="obj_bb">
+        <dia:rectangle val="1.9,6.8;11,8.55"/>
+      </dia:attribute3>
+      <dia:attribute4 name="conn_endpoints">
+        <dia:point val="1.95,6.85"/>
+        <dia:point val="10.95,8.5"/>
+        <![CDATA[ cdata section [data<1000] ]]>
+      </dia:attribute4>
+      <dia:attribute5 name="line_color">
+        <dia:color val="#000000"/>
+      </dia:attribute5>
+      <dia:attribute6 name="line_width">
+        <dia:real val="0.1"/>
+      </dia:attribute6>
+      <dia:attribute7 name="line_style">
+        <dia:enum val="0"/>
+      </dia:attribute7>
+      <dia:attribute8 name="start_arrow">
+        <dia:enum val="0"/>
+      </dia:attribute8>
+      <dia:attribute9 name="end_arrow">
+        <dia:enum val="0"/>
+      </dia:attribute9>
+      <dia:connections1>
+        <dia:connection handle="1" to="O2" connection="3"/>
+      </dia:connections1>
+    </dia:object1>
+    <dia:object2 type="Standard - Text" version="0" id="O1">
+      <dia:attribute10 name="obj_pos">
+        <dia:point val="4.8,4.75"/>
+      </dia:attribute10>
+      <dia:attribute11 name="obj_bb">
+        <dia:rectangle val="2.579,3.96359;7.021,4.96359"/>
+      </dia:attribute11>
+      <dia:attribute12 name="text">
+        <dia:composite type="text">
+          <dia:attribute13 name="string">
+            <dia:string val="sdfsdfg"/>
+          </dia:attribute13>
+          <dia:attribute14 name="font">
+            <dia:font name="Courier"/>
+          </dia:attribute14>
+          <dia:attribute14 name="height">
+            <dia:real val="1"/>
+          </dia:attribute14>
+          <dia:attribute15 name="pos">
+            <dia:point val="4.8,4.75"/>
+          </dia:attribute15>
+          <dia:attribute16 name="color">
+            <dia:color val="#000000"/>
+          </dia:attribute16>
+          <dia:attribute17 name="alignment">
+            <dia:enum val="1"/>
+          </dia:attribute17>
+        </dia:composite>
+      </dia:attribute12>
+    </dia:object2>
+    <dia:object3 type="Standard - Box" version="0" id="O2">
+      <dia:attribute16 name="obj_pos">
+        <dia:point val="10.95,7.5"/>
+      </dia:attribute16>
+      <dia:attribute17 name="obj_bb">
+        <dia:rectangle val="10.9,7.45;13.05,9.55"/>
+      </dia:attribute17>
+      <dia:attribute18 name="elem_corner">
+        <dia:point val="10.95,7.5"/>
+      </dia:attribute18>
+      <dia:attribute19 name="elem_width">
+        <dia:real val="2.05"/>
+      </dia:attribute19>
+      <dia:attribute20 name="elem_height">
+        <dia:real val="2"/>
+      </dia:attribute20>
+      <dia:attribute21 name="border_width">
+        <dia:real val="0.1"/>
+      </dia:attribute21>
+      <dia:attribute22 name="border_color">
+        <dia:color val="#000000"/>
+      </dia:attribute22>
+      <dia:attribute23 name="inner_color">
+        <dia:color val="#ffffff"/>
+      </dia:attribute23>
+      <dia:attribute24 name="line_style">
+        <dia:enum val="0"/>
+      </dia:attribute24>
+    </dia:object3>
+  </dia:layer>
+</dia:diagram>

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "pthread_barriers.h": "c",
+        "psax.h": "c"
+    }
+}
