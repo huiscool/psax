@@ -4,7 +4,7 @@ TESTFLAGS = -DTEST_$(TID)
 DEBUGFLAGS = -DDEBUG -g
 CFLAGS = -I.
 PROCESS_NUM = 1
-FILE_NAME = test5.xml
+FILE_NAME = test3.xml
 
 
 .PHONY: test

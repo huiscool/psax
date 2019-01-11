@@ -13,8 +13,9 @@
 #ifdef __APPLE__
 #include "pthread_barriers.h"
 #endif
-
+#define DEBUG
 #ifdef DEBUG
+#include <time.h>
 #define debug_printf(...) printf(__VA_ARGS__)
 #define start_loop_print(np, rank) {\
     pthread_barrier_t barrier; \
@@ -54,16 +55,19 @@ void close_file(glov_t* glo);
 
 typedef struct send_recv_buf{
     pthread_mutex_t lock;
+    pthread_rwlock_t rwlock;
     pthread_cond_t cond_empty;
     pthread_cond_t cond_full;
-    size_t size;
+    size_t max_size;
     size_t ele_size;
+    size_t cur_size;
     int64_t front;
     int64_t back;
     void* buf;
 }send_recv_buf_t;
 
-void buf_init(send_recv_buf_t* buf, size_t size, size_t ele_size);
+//return 0 if success; return -1 if failed.
+int buf_init(send_recv_buf_t* buf, size_t size, size_t ele_size);
 void buf_destroy(send_recv_buf_t* buf);
 void buf_push_back(send_recv_buf_t* buf, void* read_ele);
 void buf_push_back_serial(send_recv_buf_t* buf, void* read_eles, int ele_counts);
