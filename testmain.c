@@ -4,7 +4,8 @@
 #include <stdlib.h>
 
 void* event_handler(const event_t* event){
-    static const char* event_names[] = {"DOCUMENT_BEGIN",
+    static const char* event_names[] = {
+        "DOCUMENT_BEGIN",
         "DOCUMENT_END",
         "ELEMENT_BEGIN",
         "ELEMENT_END",
@@ -24,7 +25,8 @@ void* error_handler(const error_t* error){
     static const char* error_names[] = {
         "THREAD_NUM_ERROR",
         "FILE_OPEN_ERROR",
-        "PARSE_ERROR"
+        "LEXICAL_ERROR",
+        "SYNTAX_ERROR"
     };
     printf("error_type: %s\n", error_names[ (int)error->type ]);
     printf("msg: %s\n",error->msg);

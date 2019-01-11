@@ -34,14 +34,12 @@
 #include <assert.h>
 #endif //DEBUG
 
-
-typedef unsigned char byte_t;
 typedef unsigned char bool;
 
 typedef struct glov{
     int np; // number of threads participating parsing
     int fd; // file descriptor
-    byte_t* file_buf; // map file into memory space
+    char* file_buf; // map file into memory space
     int64_t file_size; // file size
     event_handler_t event_handler;
     error_handler_t error_handler;
@@ -51,8 +49,8 @@ glov_t glo;
 error_t glo_error;
 
 void raise_error(error_type_t type, int64_t row, int64_t col, char* msg);
-void open_file(const char* filename);
-void close_file();
+void open_file(const char* filename, glov_t* glo);
+void close_file(glov_t* glo);
 
 typedef struct send_recv_buf{
     pthread_mutex_t lock;
@@ -74,28 +72,39 @@ bool buf_is_empty(send_recv_buf_t* buf);
 bool buf_is_full(send_recv_buf_t* buf);
 
 typedef enum bcs_type{
-    START_TAG   = 0,
-    END_TAG     = 1,
-    EMPTY_TAG   = 2,
-    COMMENT     = 3,
-    PI          = 4,
-    CDATA       = 5,
+    BCS_START_TAG   = 0,
+    BCS_END_TAG     = 1,
+    BCS_COMMENT     = 2,
+    BCS_PI          = 3,
+    BCS_CDATA       = 4,
+    BCS_DONE        = 5,
 } bcs_type_t;
 
 typedef struct bcs{
     bcs_type_t type;
     int64_t row;
     int64_t col;
-    byte_t* head;
+    const char* head;
     int64_t size;
 } bcs_t;
 
-typedef struct event_buf{
-    int size;
-    event_t* events;
-} event_buf_t;
+typedef struct event_node{
+    event_t event;
+    struct event_node* next;
+} event_node_t;
+
+typedef struct event_list{
+    event_node_t* head;
+    event_node_t* tail;
+} event_list_t;
 
 void event_init(event_t* event, event_type_t type, char* name, char* value);
 void event_destroy(event_t* event);
+
+void list_init(event_list_t* list);
+void list_destroy(event_list_t* list);
+void list_insert(event_list_t* list, event_t event);
+event_list_t list_merge(event_list_t list_head, event_list_t list_tail);
+
 
 #endif //__GLOBAL_H__

@@ -1,25 +1,27 @@
 #ifndef __PSAX_H__
 #define __PSAX_H__
-
+#include <stdlib.h>
 typedef enum{
-    DOCUMENT_BEGIN  = 0,
-    DOCUMENT_END    = 1,
-    ELEMENT_BEGIN   = 2,
-    ELEMENT_END     = 3,
-    CHAR_CONTENT    = 4,
-    CDATA           = 5,
-    PI              = 6,
-    COMMENT         = 7,
-    ATTRIBUTE       = 8,
+    EVENT_DOCUMENT_BEGIN  = 0,
+    EVENT_DOCUMENT_END    = 1,
+    EVENT_ELEMENT_BEGIN   = 2,
+    EVENT_ELEMENT_END     = 3,
+    EVENT_CHAR_CONTENT    = 4,
+    EVENT_CDATA           = 5,
+    EVENT_PI              = 6,
+    EVENT_COMMENT         = 7,
+    EVENT_ATTRIBUTE       = 8,
 } event_type_t;
 
 typedef enum{
     THREAD_NUM_ERROR    = 0,
     FILE_OPEN_ERROR     = 1,
-    PARSE_ERROR         = 2,
+    LEXICAL_ERROR       = 2,
+    SYNTAX_ERROR        = 3,
 } error_type_t;
 
 #define MSG_BUF_SIZE 1024
+#define SEND_RECV_BUF_SIZE 1024
 
 typedef struct error{
     error_type_t type;
@@ -30,6 +32,9 @@ typedef struct error{
 
 typedef struct{
     event_type_t type;
+    int64_t row;
+    int64_t col;
+    int64_t offset;
     const char* name;
     const char* value;
 } event_t;
