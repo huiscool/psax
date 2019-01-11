@@ -1,56 +1,66 @@
-#include "psax.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include "global.h"
 
-#ifdef __APPLE__
-#include "pthread_barriers.h"
-#endif
-
-#define DEBUG
-
-#ifdef DEBUG
-#define debug_printf(...) printf(__VA_ARGS__)
-#define start_loop_print(np, rank) {\
-    pthread_barrier_t barrier; \
-    pthread_barrier_init(&barrier, NULL, np); \
-    for(int p = 0; p<np; p++){ \
-        if(p == rank)
-
-#define end_loop_print \
-        pthread_barrier_wait(&barrier); \
-    } \
-    pthread_barrier_destroy(&barrier); \
+void raise_error(error_type_t type, int64_t row, int64_t col, char* msg){
+    glo_error.type = type;
+    glo_error.row = row;
+    glo_error.col = col;
+    if(msg != glo_error.msg)strcpy(glo_error.msg, msg);
+    error_handler(&glo_error);
 }
-#include <assert.h>
-#else
-#define debug_printf(...)
-#define NDEBUG
-#include <assert.h>
-#endif //DEBUG
 
-///////////////////////////////
-typedef struct glo{
-    
-}glo_t;
+void open_file(const char* filename){
+    ////get file descriptor
+    int fd = open(filename, O_RDONLY);
+    if(fd == -1){
+        sprintf(glo_error.msg, "%s cannot open", filename);
+        raise_error(FILE_OPEN_ERROR, -1,-1, glo_error.msg);
+        return;
+    }
+    ////get file size
+    struct stat st;
+    fstat(fd, &st);
+    glo.file_size = st.st_size;
+    ////mmap the file into file_buf
+    glo.file_buf = mmap(NULL, glo.file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if(glo.file_buf == (byte_t*)-1){
+        sprintf(glo_error.msg, "%s cannot open", filename);
+        raise_error(FILE_OPEN_ERROR, -1,-1, glo_error.msg);
+    }
+    return;
+}
 
+void close_file(){
+    close(glo.fd);
+}
 
+void* preprocess_workload(void* p_void){
+
+}
+
+void* parse_workload(void* p_void){
+
+}
+
+void* postprocess_workload(void* p_void){
+
+}
 
 int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t error_handler, const char* filename){
-
-#ifdef TEST_1
-//test open file
-start_loop_print(1,0){
-    debug_printf("rank: 0\n");
-}
-end_loop_print
-
+    if(thread_num <= 0){
+        sprintf(glo_error.msg, "thread_num is: %d",thread_num);
+        raise_error(THREAD_NUM_ERROR, -1, -1, glo_error.msg);
+        return -1;
+    }
+    open_file(filename);
+#ifdef TEST_1 //test open file
+    for(int64_t i=0; i<glo.file_size; i++){
+        printf("%c",glo.file_buf[i]);
+    }
+    printf("\n");
+    return 0;
 #else //TEST_1
 
+    close_file();
 #endif //TEST_1
     return 0;
 }
