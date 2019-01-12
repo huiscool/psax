@@ -30,7 +30,7 @@ typedef struct error{
     char msg[MSG_BUF_SIZE];
 } error_t;
 
-typedef struct{
+typedef struct event{
     event_type_t type;
     int64_t row;
     int64_t col;

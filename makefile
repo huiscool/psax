@@ -5,17 +5,20 @@ DEBUGFLAGS = -DDEBUG -g
 CFLAGS = -I.
 PROCESS_NUM = 1
 FILE_NAME = test3.xml
+OBJS = parse.o preprocess.o sendrecvbuf.o psax.o
 
 
-.PHONY: test
+.PHONY: tes
 test: testmain psax.a
 	./testmain $(PROCESS_NUM) $(FILE_NAME)
 
 testmain: testmain.c psax.a
 	gcc -o $@ psax.a testmain.c $(CFLAGS) $(DEBUGFLAGS)
 
-psax.a: psax.c psax.h makefile global.h
-	gcc -c psax.c $(TESTFLAGS) $(DEBUGFLAGS)
-	ar -r $@ psax.o
+%.o: %.c
+	$(CC) -c $< $(CFLAGS) $(DEBUGFLAGS) $(TESTFLAGS)
+
+psax.a: $(OBJS)
+	ar -r $@ $^
 	rm *.o
 

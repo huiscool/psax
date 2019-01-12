@@ -2,6 +2,8 @@
     "files.associations": {
         "pthread_barriers.h": "c",
         "psax.h": "c",
-        "global.h": "c"
+        "global.h": "c",
+        "unistd.h": "c",
+        "stdio.h": "c"
     }
 }

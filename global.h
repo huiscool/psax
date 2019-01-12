@@ -10,24 +10,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#ifdef __APPLE__
-#include "pthread_barriers.h"
-#endif
-#define DEBUG
+// #ifdef __APPLE__
+// #include "pthread_barriers.h"
+// #endif //__APPLE__
+
 #ifdef DEBUG
 #include <time.h>
 #define debug_printf(...) printf(__VA_ARGS__)
-#define start_loop_print(np, rank) {\
-    pthread_barrier_t barrier; \
-    pthread_barrier_init(&barrier, NULL, np); \
-    for(int p = 0; p<np; p++){ \
-        if(p == rank)
-
-#define end_loop_print \
-        pthread_barrier_wait(&barrier); \
-    } \
-    pthread_barrier_destroy(&barrier); \
-}
 #include <assert.h>
 #else
 #define debug_printf(...)
@@ -35,8 +24,9 @@
 #include <assert.h>
 #endif //DEBUG
 
-typedef unsigned char bool;
 
+////////////////////////////////////////////////////////////////
+typedef unsigned char bool;
 typedef struct glov{
     int np; // number of threads participating parsing
     int fd; // file descriptor
@@ -53,11 +43,11 @@ void raise_error(error_type_t type, int64_t row, int64_t col, char* msg);
 void open_file(const char* filename, glov_t* glo);
 void close_file(glov_t* glo);
 
+////////////////////////////////////////////////////////////////
 typedef struct send_recv_buf{
     pthread_mutex_t lock;
-    pthread_rwlock_t rwlock;
-    pthread_cond_t cond_empty;
-    pthread_cond_t cond_full;
+    pthread_cond_t not_empty;
+    pthread_cond_t not_full;
     size_t max_size;
     size_t ele_size;
     size_t cur_size;
@@ -66,7 +56,6 @@ typedef struct send_recv_buf{
     void* buf;
 }send_recv_buf_t;
 
-//return 0 if success; return -1 if failed.
 int buf_init(send_recv_buf_t* buf, size_t size, size_t ele_size);
 void buf_destroy(send_recv_buf_t* buf);
 void buf_push_back(send_recv_buf_t* buf, void* read_ele);
@@ -75,6 +64,7 @@ void buf_pop_front(send_recv_buf_t* buf, void* write_ele);
 bool buf_is_empty(send_recv_buf_t* buf);
 bool buf_is_full(send_recv_buf_t* buf);
 
+////////////////////////////////////////////////////////////////
 typedef enum bcs_type{
     BCS_START_TAG   = 0,
     BCS_END_TAG     = 1,
@@ -92,6 +82,9 @@ typedef struct bcs{
     int64_t size;
 } bcs_t;
 
+bcs_t produce_bcs_iterator(char* p, int64_t row, int64_t col, char** next_p , int64_t* next_row, int64_t* next_col);
+
+////////////////////////////////////////////////////////////////
 typedef struct event_node{
     event_t event;
     struct event_node* next;
@@ -102,13 +95,11 @@ typedef struct event_list{
     event_node_t* tail;
 } event_list_t;
 
-void event_init(event_t* event, event_type_t type, char* name, char* value);
-void event_destroy(event_t* event);
-
 void list_init(event_list_t* list);
 void list_destroy(event_list_t* list);
-void list_insert(event_list_t* list, event_t event);
-event_list_t list_merge(event_list_t list_head, event_list_t list_tail);
+void list_insert(event_list_t* list, const event_t* event);
+event_list_t list_merge(event_list_t* list1, event_list_t* list2);
 
+////////////////////////////////////////////////////////////////
 
 #endif //__GLOBAL_H__
