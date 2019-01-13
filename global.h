@@ -104,8 +104,7 @@ typedef struct preprocess_glov{
     int64_t size;
     delimiter_node_t** begins;
     delimiter_node_t** ends;
-    delimiter_list_t* list_start;
-    delimiter_list_t* list_end;
+    delimiter_list_t* lists;
     bcs_t* chunks;
 } preprocess_glov_t;
 

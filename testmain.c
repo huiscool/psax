@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 void* event_handler(const event_t* event){
+#ifndef NO_OUTPUT
     static const char* event_names[] = {
         "EVENT_DOCUMENT_BEGIN",
         "EVENT_DOCUMENT_END",
@@ -11,7 +12,7 @@ void* event_handler(const event_t* event){
         "EVENT_EMPTY_ELEMENT",
         "EVENT_ELEMENT_END",
         "EVENT_ATTRIBUTE",
-        "EVENT_CHAR_CONTENT",
+        "EVENT_CHAR_DATA",
         "EVENT_COMMENT",
         "EVENT_PI",
         "EVENT_CDATA", 
@@ -26,6 +27,7 @@ void* event_handler(const event_t* event){
         printf("%c",event->value[i]);
     }
     printf("\n\n");
+#endif //NO_OUTPUT
     return (void*)0;
 }
 
@@ -36,6 +38,7 @@ void* error_handler(const error_t* error){
         "LEXICAL_ERROR",
         "SYNTAX_ERROR"
     };
+    printf("row:%lld col:%lld\n",error->row, error->col);
     printf("error_type: %s\n", error_names[ (int)error->type ]);
     printf("msg: %s\n",error->msg);
     exit(EXIT_FAILURE);

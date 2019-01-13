@@ -133,24 +133,22 @@ void* bcs_chunk_workload(void* p_glov){
     int64_t m_offset = tid * loc_size;
     if(tid == np - 1)loc_size = size - m_offset;
     int64_t m_end = m_offset + loc_size;
-    delimiter_list_t list_s;//'<'
-    delimiter_list_t list_e;//'>'
-    delimiter_list_init(&list_s);
-    delimiter_list_init(&list_e);
+    delimiter_list_t list;
+    delimiter_list_init(&list);
     int flag = 0;
     delimiter_node_t* scan_begin;
     for(int64_t i=m_offset; i<m_end; i++){
         if(buf[i] == '<'){
-            delimiter_list_insert(&list_s, &buf[i]);
+            delimiter_list_insert(&list, &buf[i]);
         }
         if(buf[i] == '>'){
             for(int k=0; k<special_delimiter_counts; k++){
                 int64_t j = i + 1 - end_delimiter_len[k];
                 if(strncmp(&buf[j], end_delimiters[k], end_delimiter_len[k]) == 0){
-                    delimiter_list_insert(&list_e, &buf[j]);
+                    delimiter_list_insert(&list, &buf[j]);
                     flag |= 1<<k;
                     if(flag == flag_full){
-                        scan_begin = list_e.tail;
+                        scan_begin = list.tail;
                         flag |= 1<<3; // make flag no longer == flag_full
                     }
                     break;
@@ -158,26 +156,14 @@ void* bcs_chunk_workload(void* p_glov){
             }
         }
     }
-    glo->list_start[tid] = list_s;
-    glo->list_end[tid] = list_e;
+    glo->lists[tid] = list;
     pthread_barrier_wait(&(glo->barrier));
     if(tid == 0){
-        list_e.head = NULL;
-        list_e.tail = NULL;
-        list_s.head = NULL;
-        list_s.tail = NULL;
-        for(int i=0; i<np; i++){
-            list_s = delimiter_list_merge(&list_s, &(glo->list_start[i]));
-            list_e = delimiter_list_merge(&list_e, &(glo->list_end[i]));
-        }
-        delimiter_node_t* ps = list_s.head;
-        delimiter_node_t* pe = list_e.head;
-        while(ps!= NULL){
-            const char* cps = ps->p;
-            const char* cpe = pe->p;
-        }
+        list.head = NULL;
+        list.tail = NULL;
     }
     pthread_barrier_wait(&(glo->barrier));
+    delimiter_list_destroy(&list);
     return (void*)0;
 }
 
@@ -190,8 +176,7 @@ void preprocess_glov_init(preprocess_glov_t* pre_glo, glov_t* glo, bcs_t* chunks
     pre_glo->size = glo->file_size;
     pre_glo->begins = malloc(np * sizeof(delimiter_node_t*));
     pre_glo->ends = malloc(np * sizeof(delimiter_node_t*));
-    pre_glo->list_start = malloc(np * sizeof(delimiter_list_t));
-    pre_glo->list_end = malloc(np * sizeof(delimiter_list_t));
+    pre_glo->lists = malloc(np * sizeof(delimiter_list_t));
     pre_glo->chunks = chunks;
 }
 
@@ -200,8 +185,7 @@ void preprocess_glov_destroy(preprocess_glov_t* pre_glo){
     pthread_barrier_destroy(&(pre_glo->barrier));
     free(pre_glo->begins);
     free(pre_glo->ends);
-    free(pre_glo->list_start);
-    free(pre_glo->list_end);
+    free(pre_glo->lists);
 }
 
 void produce_bcs_chunks(bcs_t* chunks, glov_t* glo){

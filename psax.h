@@ -8,7 +8,7 @@ typedef enum event_type{
     EVENT_EMPTY_ELEMENT   = 3,
     EVENT_ELEMENT_END     = 4,
     EVENT_ATTRIBUTE       = 5,
-    EVENT_CHAR_CONTENT    = 6,
+    EVENT_CHAR_DATA       = 6,
     EVENT_COMMENT         = 7,
     EVENT_PI              = 8,
     EVENT_CDATA           = 9,

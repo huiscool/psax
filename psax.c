@@ -40,18 +40,6 @@ void close_file(glov_t* glo){
     close(glo->fd);
 }
 
-void serial_parse(){
-    int proprocess_done = 0;
-    int64_t row = 1;
-    int64_t col = 0;
-    char* p = glo.file_buf;
-    while(!proprocess_done){
-        bcs_t res = produce_bcs_iterator(p, &p, &glo);
-
-        if(res.type == BCS_DONE)break;
-    }
-}
-
 int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t error_handler, const char* filename){
 #ifdef PERFORMANCE
     clock_t start_time = clock();
@@ -70,17 +58,21 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     event_list_t list;
     event_list_init(&list);
     char* a = glo.file_buf;
+    //char* a = "</a>  ";
     int res = content(a, &a, &list);
     event_node_t* p = list.head;
     par_glo.np = 1;
     par_glo.lists = &list;
     list = post_process(&par_glo);
-    // while(p != NULL){
-    //     event_handler(&(p->event));
-    //     p = p->next;
-    // }
+    while(p != NULL){
+        event_handler(&(p->event));
+        p = p->next;
+    }
     printf("res:%d, a:%s\n", res, a);
 #endif //SERIAL
+#ifdef PARALLEL
+
+#endif //PARALLEL
     close_file(&glo);
 #ifdef PERFORMANCE
     clock_t end_time = clock();

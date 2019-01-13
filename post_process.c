@@ -76,6 +76,10 @@ event_list_t post_process(parse_glov_t* par_glo){
             }
         }
     }
+    if(!stack_is_empty(&stack)){
+        event_t* top = stack_top(&stack);
+        raise_error(SYNTAX_ERROR, top->offset, "tag not matched");
+    }
     stack_destroy(&stack);
     return glo_events;
 }
