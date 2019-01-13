@@ -71,7 +71,15 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     printf("res:%d, a:%s\n", res, a);
 #endif //SERIAL
 #ifdef PARALLEL
-
+    bcs_list_t* lists = preprocess(&glo);
+    // for(int i=0; i<np; i++){
+    //     bcs_node_t* p = lists[i].head;
+    //     while(p!=NULL){
+    //         printf("%c%c%c  ", p->p[0], p->p[1], p->p[2]);
+    //         p = p->next;
+    //     }
+    //     printf("\n");
+    // }
 #endif //PARALLEL
     close_file(&glo);
 #ifdef PERFORMANCE

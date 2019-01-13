@@ -45,33 +45,6 @@ event_list_t event_list_merge(event_list_t* list1, event_list_t* list2){
     };
 }
 
-void loc_parse(event_list_t* list, bcs_t* chunk){
-    
-}
-
-void* parse_workload(void* p_chunk){
-    event_list_t* list = malloc(sizeof(event_list_t));
-    event_list_init(list);
-    loc_parse(list, (bcs_t*)p_chunk);
-    return  (void*)list;
-}
-
-void glo_parse(parse_glov_t* par_glo, bcs_t* chunks){
-    int np = par_glo->np;
-    pthread_t threads[np];
-    event_list_t* plists[np];
-    for(int i=0; i<np; i++){
-        pthread_create(&threads[i], NULL, parse_workload, &chunks[i]);
-    }
-    for(int i=0; i<np; i++){
-        pthread_join(threads[i], (void**)&plists[i]);
-    }
-    for(int i=0; i<np; i++){
-        memcpy(&(par_glo->lists[i]), plists[i], sizeof(event_list_t));
-        free(plists[i]);
-    }
-}
-
 void parse_glov_init(parse_glov_t* par_glo, glov_t* glo){
     int np = glo->np;
     par_glo->np = np;
@@ -81,7 +54,6 @@ void parse_glov_init(parse_glov_t* par_glo, glov_t* glo){
 void parse_glov_destroy(parse_glov_t* par_glo){
     free(par_glo->lists);
 }
-
 
 int element(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
@@ -495,3 +467,39 @@ int charc(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     return flag;
 }
+
+////////////////////////////////////////////////////////////////
+
+event_list_t glo_parse(bcs_list_t* blist){
+    
+
+}
+
+void loc_parse(event_list_t* elist, bcs_list_t* blist){
+
+}
+
+
+int emptyelemtag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int attribute_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int stag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int etag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int content_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int comment_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int pi_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int pitarget_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdsect_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdstart_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdend_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int namestartchar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int namechar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int name_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int attvalue_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int reference_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int entityref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int charref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int chardata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int eq_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int space_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int charc_p(char* p, char** next_pos, char* tmn, event_list_t* list);

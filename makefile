@@ -1,11 +1,11 @@
 CC = gcc
-DEBUGFLAGS = --DDEBUG -g -DNO_OUTPUT
+DEBUGFLAGS = -DDEBUG -g -DNO_OUTPUT
 PERFOMANCEFLAGS = -DPERFORMANCE
 CFLAGS = -I.
-PROCESS_NUM = 1
-FILE_NAME = test1.xml
+PROCESS_NUM = 4
+FILE_NAME = test3.xml
 OBJS = parse.o preprocess.o post_process.o psax.o pthread_barriers.o
-SERIALFLAGS = -DSERIAL
+SERIALFLAGS = -DPARALLEL
 
 .PHONY: test
 test: testmain psax.a

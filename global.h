@@ -65,36 +65,33 @@ bool buf_is_full(send_recv_buf_t* buf);
 
 ////////////////////////////////////////////////////////////////
 typedef enum bcs_type{
-    BCS_START_TAG   = 0,
-    BCS_END_TAG     = 1,
-    BCS_COMMENT     = 2,
-    BCS_PI          = 3,
-    BCS_CDATA       = 4,
-    BCS_DONE        = 5,
+    BCS_START_TAG_BEGIN = 0,
+    BCS_END_TAG_BEGIN   = 1,
+    BCS_TAG_END         = 2,
+    BCS_COMMENT_BEGIN   = 3,
+    BCS_COMMENT_END     = 4,
+    BCS_PI_BEGIN        = 5,
+    BCS_PI_END          = 6,
+    BCS_CDATA_BEGIN     = 7,
+    BCS_CDATA_END       = 8,
+    BCS_NONE            = 9,
 } bcs_type_t;
 
-typedef struct bcs{
+typedef struct bcs_node{
     bcs_type_t type;
-    int64_t offset;
-    const char* head;
-    int64_t size;
-} bcs_t;
-
-
-typedef struct delimiter_node{
     const char* p;
-    struct delimiter_node* next;
-} delimiter_node_t;
+    struct bcs_node* next;
+} bcs_node_t;
 
-typedef struct delimiter_list{
-    delimiter_node_t* head;
-    delimiter_node_t* tail;
-} delimiter_list_t;
+typedef struct bcs_list{
+    bcs_node_t* head;
+    bcs_node_t* tail;
+} bcs_list_t;
 
-void delimiter_list_init(delimiter_list_t* list);
-void delimiter_list_destroy(delimiter_list_t* list);
-void delimiter_list_insert(delimiter_list_t* list, const char* event);
-delimiter_list_t delimiter_list_merge(delimiter_list_t* list1, delimiter_list_t* list2);
+void bcs_list_init(bcs_list_t* list);
+void bcs_list_destroy(bcs_list_t* list);
+void bcs_list_insert(bcs_list_t* list, const char* p, bcs_type_t type);
+bcs_list_t bcs_list_merge(bcs_list_t* list1, bcs_list_t* list2);
 
 typedef struct preprocess_glov{
     pthread_mutex_t lock;
@@ -102,18 +99,13 @@ typedef struct preprocess_glov{
     int np;
     char* buf;
     int64_t size;
-    delimiter_node_t** begins;
-    delimiter_node_t** ends;
-    delimiter_list_t* lists;
-    bcs_t* chunks;
+    bcs_list_t* lists;
+    bcs_list_t glo_blist;
 } preprocess_glov_t;
 
-void preprocess_glov_init(preprocess_glov_t* pre_glov, glov_t* glo, bcs_t* chunks);
-void preprocess_glov_destroy(preprocess_glov_t* pre_glov);
-bcs_t produce_bcs_iterator(char* p, char** next_p, glov_t* glo);
-
-void produce_bcs_chunks(bcs_t* chunks, glov_t* glo);
-
+void preprocess_glov_init(preprocess_glov_t* pre_glo, glov_t* glo);
+void preprocess_glov_destroy(preprocess_glov_t* pre_glo);
+bcs_list_t* preprocess(glov_t* glo);
 ////////////////////////////////////////////////////////////////
 typedef struct event_node{
     event_t event;
@@ -130,7 +122,7 @@ void event_list_destroy(event_list_t* list);
 void event_list_insert(event_list_t* list, const event_t* event);
 void event_list_insert_after(event_list_t* list, event_node_t* node, const event_t* event);
 event_list_t event_list_merge(event_list_t* list1, event_list_t* list2);
-void loc_parse(event_list_t* list, bcs_t* chunk);
+
 
 typedef struct parse_glov{
     int np;
@@ -140,7 +132,8 @@ parse_glov_t par_glo;
 
 void parse_glov_init(parse_glov_t* par_glo, glov_t* glo);
 void parse_glov_destroy(parse_glov_t* par_glo);
-void glo_parse(parse_glov_t* par_glo, bcs_t* chunks);
+void loc_parse(event_list_t* elist, bcs_list_t* blist);
+event_list_t glo_parse(bcs_list_t* blist);
 
 int element(char* p, char** next_pos, event_list_t* list);
 int emptyelemtag(char* p, char** next_pos, event_list_t* list);
@@ -166,6 +159,33 @@ int chardata(char* p, char** next_pos, event_list_t* list);
 int eq(char* p, char** next_pos, event_list_t* list);
 int space(char* p, char** next_pos, event_list_t* list);
 int charc(char* p, char** next_pos, event_list_t* list);
+
+////////////////////////////////////////////////////////////////
+
+int emptyelemtag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int attribute_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int stag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int etag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int content_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int comment_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int pi_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int pitarget_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdsect_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdstart_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int cdend_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int namestartchar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int namechar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int name_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int attvalue_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int reference_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int entityref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int charref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int chardata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int eq_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int space_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+int charc_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+
 ////////////////////////////////////////////////////////////////
 typedef struct event_stack_node{
     event_t event;
