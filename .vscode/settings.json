@@ -4,6 +4,7 @@
         "psax.h": "c",
         "global.h": "c",
         "unistd.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "regex.h": "c"
     }
 }

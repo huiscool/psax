@@ -1,0 +1,24 @@
+[1]   element   ::=    EmptyElemTag | STag content ETag
+[2]   EmptyElemTag   ::=   '<' Name (S Attribute)* S? '/>'
+[3]   Attribute   ::=    Name Eq AttValue
+[4]   STag   ::=   '<' Name (S Attribute)* S '>'
+[5]   ETag   ::=   '</' Name S? '>'
+[6]   content   ::=    CharData? ((element | Reference | CDSect | PI | Comment) CharData?)*
+[7]   Comment   ::=   '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
+[8]   PI   ::=   '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
+[9]   PITarget   ::=    Name - (('X' | 'x') ('M' | 'm') ('L' | 'l'))
+[10]   CDSect   ::=    CDStart CData CDEnd 
+[11]   CDStart   ::=   '<![CDATA['
+[12]   CData   ::=   (Char* - (Char* ']]>' Char*)) 
+[13]   CDEnd   ::=   ']]>'
+[14]   NameStartChar   ::=   ":" | [A-Z] | "_" | [a-z]  
+[15]  NameChar   ::=   NameStartChar | "-" | "." | [0-9] 
+[16]   Name   ::=   NameStartChar (NameChar)*
+[17]   AttValue   ::=   '"' ([^<&"] | Reference)* '"' |  "'" ([^<&'] | Reference)* "'"
+[18]   Reference   ::=    EntityRef | CharRef 
+[19]   EntityRef   ::=   '&' Name ';'
+[20]   CharRef   ::=   '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
+[21]  CharData   ::=   [^<&]* - ([^<&]* ']]>' [^<&]*)
+[22] Eq   ::=    S? '=' S?
+[23] S   ::=   (#x20 | #x9 | #xD | #xA)+
+[24] Char   ::=   #x9 | #xA | #xD | [#x20-#x7F] 

@@ -5,15 +5,16 @@
 
 void* event_handler(const event_t* event){
     static const char* event_names[] = {
-        "DOCUMENT_BEGIN",
-        "DOCUMENT_END",
-        "ELEMENT_BEGIN",
-        "ELEMENT_END",
-        "CHAR_CONTENT",
-        "CDATA",
-        "PI",
-        "COMMENT",
-        "ATTRIBUTE"
+        "EVENT_DOCUMENT_BEGIN",
+        "EVENT_DOCUMENT_END",
+        "EVENT_ELEMENT_BEGIN",
+        "EVENT_EMPTY_ELEMENT",
+        "EVENT_ELEMENT_END",
+        "EVENT_ATTRIBUTE",
+        "EVENT_CHAR_CONTENT",
+        "EVENT_COMMENT",
+        "EVENT_PI",
+        "EVENT_CDATA", 
     };
     printf("event type: %s\n", event_names[ (int)event->type ]);
     printf("name: %s\n", event->name);

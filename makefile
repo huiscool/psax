@@ -5,15 +5,15 @@ DEBUGFLAGS = -DDEBUG -g
 CFLAGS = -I.
 PROCESS_NUM = 1
 FILE_NAME = test3.xml
-OBJS = parse.o preprocess.o sendrecvbuf.o psax.o
+OBJS = parse.o preprocess.o sendrecvbuf.o psax.o pthread_barriers.o
 
 
-.PHONY: tes
+.PHONY: test
 test: testmain psax.a
 	./testmain $(PROCESS_NUM) $(FILE_NAME)
 
 testmain: testmain.c psax.a
-	gcc -o $@ psax.a testmain.c $(CFLAGS) $(DEBUGFLAGS)
+	$(CC) -o $@ psax.a testmain.c $(CFLAGS) $(DEBUGFLAGS)
 
 %.o: %.c
 	$(CC) -c $< $(CFLAGS) $(DEBUGFLAGS) $(TESTFLAGS)

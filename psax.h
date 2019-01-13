@@ -5,12 +5,13 @@ typedef enum{
     EVENT_DOCUMENT_BEGIN  = 0,
     EVENT_DOCUMENT_END    = 1,
     EVENT_ELEMENT_BEGIN   = 2,
-    EVENT_ELEMENT_END     = 3,
-    EVENT_CHAR_CONTENT    = 4,
-    EVENT_CDATA           = 5,
-    EVENT_PI              = 6,
+    EVENT_EMPTY_ELEMENT   = 3,
+    EVENT_ELEMENT_END     = 4,
+    EVENT_ATTRIBUTE       = 5,
+    EVENT_CHAR_CONTENT    = 6,
     EVENT_COMMENT         = 7,
-    EVENT_ATTRIBUTE       = 8,
+    EVENT_PI              = 8,
+    EVENT_CDATA           = 9,
 } event_type_t;
 
 typedef enum{
@@ -32,11 +33,11 @@ typedef struct error{
 
 typedef struct event{
     event_type_t type;
-    int64_t row;
-    int64_t col;
     int64_t offset;
     const char* name;
+    int name_len;
     const char* value;
+    int value_len;
 } event_t;
 
 typedef void* (*event_handler_t)(const event_t* event);

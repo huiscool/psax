@@ -1,7 +1,15 @@
 #include "global.h"
 
-void raise_error(error_type_t type, int64_t row, int64_t col, char* msg){
+void raise_error(error_type_t type, int64_t offset, char* msg){
     glo_error.type = type;
+    int row = 1;
+    int col = 1;
+    for(int i=0; i<offset; i++,col++){
+        if(glo.file_buf[i] == '\n'){
+            row++;
+            col=0;
+        }
+    }
     glo_error.row = row;
     glo_error.col = col;
     if(msg != glo_error.msg)strcpy(glo_error.msg, msg);
@@ -13,7 +21,7 @@ void open_file(const char* filename, glov_t* glo){
     int fd = open(filename, O_RDWR);
     if(fd == -1){
         sprintf(glo_error.msg, "%s cannot open", filename);
-        raise_error(FILE_OPEN_ERROR, -1,-1, glo_error.msg);
+        raise_error(FILE_OPEN_ERROR, -1, glo_error.msg);
         return;
     }
     ////get file size
@@ -24,7 +32,7 @@ void open_file(const char* filename, glov_t* glo){
     glo->file_buf = mmap(NULL, glo->file_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
     if(glo->file_buf == (char*)-1){
         sprintf(glo_error.msg, "%s cannot open", filename);
-        raise_error(FILE_OPEN_ERROR, -1,-1, glo_error.msg);
+        raise_error(FILE_OPEN_ERROR, -1, glo_error.msg);
     }
     return;
 }
@@ -38,14 +46,7 @@ void* preprocess_workload(void* p_void){
     int64_t col = 0;
     char* p = glo.file_buf;
     while(!proprocess_done){
-        bcs_t res = produce_bcs_iterator(p, row, col, &p, &row, &col);
-        // printf("row: %lld col:%lld\n",res.row, res.col);
-        // printf("type:%d\n",res.type);
-        // for(int i=0; i<res.size; i++){
-        //     printf("%c",res.head[i]);
-        // }
-        // printf("\n");
-        // if(res.type == BCS_DONE){proprocess_done = 1;break;}
+        bcs_t res = produce_bcs_iterator(p, &p, &glo);
     }
     return (void*)0;
 }
@@ -66,6 +67,18 @@ void* postprocess_workload(void* p_void){
     return (void*)0;
 }
 
+void serial_parse(){
+    int proprocess_done = 0;
+    int64_t row = 1;
+    int64_t col = 0;
+    char* p = glo.file_buf;
+    while(!proprocess_done){
+        bcs_t res = produce_bcs_iterator(p, &p, &glo);
+
+        if(res.type == BCS_DONE)break;
+    }
+}
+
 int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t error_handler, const char* filename){
 #ifdef DEBUG
     clock_t start_time = clock();
@@ -73,28 +86,28 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     glo.error_handler = error_handler;
     glo.event_handler = event_handler;
     glo.np = thread_num;
+    int np = thread_num;
     if(thread_num <= 0){
         sprintf(glo_error.msg, "thread_num is: %d",thread_num);
-        raise_error(THREAD_NUM_ERROR, -1, -1, glo_error.msg);
+        raise_error(THREAD_NUM_ERROR, -1, glo_error.msg);
         return -1;
     }
     open_file(filename, &glo);
 
-#ifdef TEST_1
-    
-#else //TEST_1
-    pthread_t parse_threads[thread_num], preprocess_thread, postprocess_thread;
-    pthread_create(&preprocess_thread, NULL, preprocess_workload, NULL);
-    for(int i=0; i<thread_num; i++){
-        pthread_create(&parse_threads[i], NULL, parse_workload, NULL);
-    }
-    pthread_create(&postprocess_thread, NULL, postprocess_workload, NULL);
-
-#ifdef TEST_2 //test send_recv_buf
-    
-#else //TEST_2
-#endif //TEST_2
+#ifdef TEST_1 //preprocess
+    bcs_t* chunks = malloc(np * sizeof(bcs_t));
+    produce_bcs_chunks(chunks, &glo);
+    free(chunks);
 #endif //TEST_1
+
+#ifdef TEST_2 //parse
+    //char* a = "<? pi example 20<30 ?>";
+    //char* p = a;
+    char* p = glo.file_buf;
+    printf("%d:%s\n", content(p, &p), p);
+#endif //TEST_2
+    
+
 
     close_file(&glo);
 #ifdef DEBUG

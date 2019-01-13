@@ -9,7 +9,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "pthread_barriers.h"
 // #ifdef __APPLE__
 // #include "pthread_barriers.h"
 // #endif //__APPLE__
@@ -39,7 +39,7 @@ typedef struct glov{
 glov_t glo;
 error_t glo_error;
 
-void raise_error(error_type_t type, int64_t row, int64_t col, char* msg);
+void raise_error(error_type_t type, int64_t offset, char* msg);
 void open_file(const char* filename, glov_t* glo);
 void close_file(glov_t* glo);
 
@@ -76,13 +76,45 @@ typedef enum bcs_type{
 
 typedef struct bcs{
     bcs_type_t type;
-    int64_t row;
-    int64_t col;
+    int64_t offset;
     const char* head;
     int64_t size;
 } bcs_t;
 
-bcs_t produce_bcs_iterator(char* p, int64_t row, int64_t col, char** next_p , int64_t* next_row, int64_t* next_col);
+
+typedef struct delimiter_node{
+    const char* p;
+    struct delimiter_node* next;
+} delimiter_node_t;
+
+typedef struct delimiter_list{
+    delimiter_node_t* head;
+    delimiter_node_t* tail;
+} delimiter_list_t;
+
+void delimiter_list_init(delimiter_list_t* list);
+void delimiter_list_destroy(delimiter_list_t* list);
+void delimiter_list_insert(delimiter_list_t* list, const char* event);
+delimiter_list_t delimiter_list_merge(delimiter_list_t* list1, delimiter_list_t* list2);
+
+typedef struct preprocess_glov{
+    pthread_mutex_t lock;
+    pthread_barrier_t barrier;
+    int np;
+    char* buf;
+    int64_t size;
+    delimiter_node_t** begins;
+    delimiter_node_t** ends;
+    delimiter_list_t* list_start;
+    delimiter_list_t* list_end;
+    bcs_t* chunks;
+} preprocess_glov_t;
+
+void preprocess_glov_init(preprocess_glov_t* pre_glov, glov_t* glo, bcs_t* chunks);
+void preprocess_glov_destroy(preprocess_glov_t* pre_glov);
+bcs_t produce_bcs_iterator(char* p, char** next_p, glov_t* glo);
+
+void produce_bcs_chunks(bcs_t* chunks, glov_t* glo);
 
 ////////////////////////////////////////////////////////////////
 typedef struct event_node{
@@ -99,7 +131,32 @@ void list_init(event_list_t* list);
 void list_destroy(event_list_t* list);
 void list_insert(event_list_t* list, const event_t* event);
 event_list_t list_merge(event_list_t* list1, event_list_t* list2);
+event_list_t parse(bcs_t bcs);
 
+int element(char* p, char** next_pos);
+int emptyelemtag(char* p, char** next_pos);
+int attribute(char* p, char** next_pos);
+int stag(char* p, char** next_pos);
+int etag(char* p, char** next_pos);
+int content(char* p, char** next_pos);
+int comment(char* p, char** next_pos);
+int pi(char* p, char** next_pos);
+int pitarget(char* p, char** next_pos);
+int cdsect(char* p, char** next_pos);
+int cdstart(char* p, char** next_pos);
+int cdata(char* p, char** next_pos);
+int cdend(char* p, char** next_pos);
+int namestartchar(char* p, char** next_pos);
+int namechar(char* p, char** next_pos);
+int name(char* p, char** next_pos);
+int attvalue(char* p, char** next_pos);
+int reference(char* p, char** next_pos);
+int entityref(char* p, char** next_pos);
+int charref(char* p, char** next_pos);
+int chardata(char* p, char** next_pos);
+int eq(char* p, char** next_pos);
+int space(char* p, char** next_pos);
+int charc(char* p, char** next_pos);
 ////////////////////////////////////////////////////////////////
 
 #endif //__GLOBAL_H__
