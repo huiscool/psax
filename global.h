@@ -9,10 +9,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef __APPLE__
 #include "pthread_barriers.h"
-// #ifdef __APPLE__
-// #include "pthread_barriers.h"
-// #endif //__APPLE__
+#endif //__APPLE__
 
 #ifdef DEBUG
 #include <time.h>
@@ -130,8 +129,9 @@ typedef struct event_list{
 void event_list_init(event_list_t* list);
 void event_list_destroy(event_list_t* list);
 void event_list_insert(event_list_t* list, const event_t* event);
+void event_list_insert_after(event_list_t* list, event_node_t* node, const event_t* event);
 event_list_t event_list_merge(event_list_t* list1, event_list_t* list2);
-event_list_t parse(bcs_t bcs);
+void loc_parse(event_list_t* list, bcs_t* chunk);
 
 typedef struct parse_glov{
     int np;
@@ -141,6 +141,7 @@ parse_glov_t par_glo;
 
 void parse_glov_init(parse_glov_t* par_glo, glov_t* glo);
 void parse_glov_destroy(parse_glov_t* par_glo);
+void glo_parse(parse_glov_t* par_glo, bcs_t* chunks);
 
 int element(char* p, char** next_pos, event_list_t* list);
 int emptyelemtag(char* p, char** next_pos, event_list_t* list);
@@ -167,5 +168,25 @@ int eq(char* p, char** next_pos, event_list_t* list);
 int space(char* p, char** next_pos, event_list_t* list);
 int charc(char* p, char** next_pos, event_list_t* list);
 ////////////////////////////////////////////////////////////////
+typedef struct event_stack_node{
+    event_t event;
+    struct event_stack_node* prev;
+    struct event_stack_node* next;
+} event_stack_node_t;
+
+typedef struct event_stack{
+    int n;
+    event_stack_node_t* top;
+} event_stack_t;
+
+void stack_init(event_stack_t* stack);
+void stack_destroy(event_stack_t* stack);
+event_t* stack_top(event_stack_t* stack);
+void stack_pop(event_stack_t* stack);
+void stack_push(event_stack_t* stack, const event_t* event);
+bool stack_is_empty(event_stack_t* stack);
+
+event_list_t post_process(parse_glov_t* par_glo);
+
 
 #endif //__GLOBAL_H__

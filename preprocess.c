@@ -116,6 +116,13 @@ delimiter_list_t delimiter_list_merge(delimiter_list_t* list1, delimiter_list_t*
 }
 
 void* bcs_chunk_workload(void* p_glov){
+    const unsigned char special_delimiter_counts = 3;
+    const unsigned char flag_full = 7;
+    static char* end_delimiters[] = {"-->","?>","]]>",};
+    static int end_delimiter_len[] = {3, 2, 3,};
+    static bcs_type_t delimiter_type[] = {BCS_COMMENT,BCS_PI,BCS_CDATA,};
+    static char* begin_delimiters[] = {"<!--","<?","<![CDATA[",};
+    static unsigned char begin_delimiter_len[] = {4, 2, 9,}; 
     preprocess_glov_t* glo = (preprocess_glov_t*)p_glov;
     int np = glo->np;
     char* buf = glo->buf;
@@ -137,10 +144,6 @@ void* bcs_chunk_workload(void* p_glov){
             delimiter_list_insert(&list_s, &buf[i]);
         }
         if(buf[i] == '>'){
-            const unsigned char special_delimiter_counts = 3;
-            const unsigned char flag_full = 7;
-            static char* end_delimiters[] = {"-->","?>","]]>",};
-            static int end_delimiter_len[] = {3, 2, 3,};
             for(int k=0; k<special_delimiter_counts; k++){
                 int64_t j = i + 1 - end_delimiter_len[k];
                 if(strncmp(&buf[j], end_delimiters[k], end_delimiter_len[k]) == 0){
@@ -170,7 +173,8 @@ void* bcs_chunk_workload(void* p_glov){
         delimiter_node_t* ps = list_s.head;
         delimiter_node_t* pe = list_e.head;
         while(ps!= NULL){
-            const char* p = ps->p;
+            const char* cps = ps->p;
+            const char* cpe = pe->p;
         }
     }
     pthread_barrier_wait(&(glo->barrier));

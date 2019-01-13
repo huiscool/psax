@@ -24,6 +24,19 @@ void event_list_insert(event_list_t* list, const event_t* event){
         list->tail = new_node;
     }
 }
+void event_list_insert_after(event_list_t* list, event_node_t* node, const event_t* event){
+    event_node_t* new_node = malloc(sizeof(event_node_t));
+    memcpy(&(new_node->event), event, sizeof(event_t));
+    if(node == NULL){
+        new_node->next = list->head;
+        list->head = new_node;
+        if(list->tail == NULL)list->tail = new_node;
+    }else{
+        if(node == list->tail)list->tail = new_node;
+        new_node->next = node->next;
+        node->next = new_node;
+    }
+}
 event_list_t event_list_merge(event_list_t* list1, event_list_t* list2){
     list1->tail->next = list2->head;
     return (event_list_t){
@@ -32,9 +45,31 @@ event_list_t event_list_merge(event_list_t* list1, event_list_t* list2){
     };
 }
 
-
-event_list_t parse(bcs_t bcs){
+void loc_parse(event_list_t* list, bcs_t* chunk){
     
+}
+
+void* parse_workload(void* p_chunk){
+    event_list_t* list = malloc(sizeof(event_list_t));
+    event_list_init(list);
+    loc_parse(list, (bcs_t*)p_chunk);
+    return  (void*)list;
+}
+
+void glo_parse(parse_glov_t* par_glo, bcs_t* chunks){
+    int np = par_glo->np;
+    pthread_t threads[np];
+    event_list_t* plists[np];
+    for(int i=0; i<np; i++){
+        pthread_create(&threads[i], NULL, parse_workload, &chunks[i]);
+    }
+    for(int i=0; i<np; i++){
+        pthread_join(threads[i], (void**)&plists[i]);
+    }
+    for(int i=0; i<np; i++){
+        memcpy(&(par_glo->lists[i]), plists[i], sizeof(event_list_t));
+        free(plists[i]);
+    }
 }
 
 void parse_glov_init(parse_glov_t* par_glo, glov_t* glo){
@@ -79,19 +114,6 @@ int emptyelemtag(char* p, char** next_pos, event_list_t* list){
     char* tag_name = p;
     if(!name(p, &p, list))return flag;
     int tag_name_len = p - tag_name;
-    event_t start_tag_event={
-        .type       = EVENT_ELEMENT_BEGIN,
-        .offset     = head - glo.file_buf,
-        .name       = tag_name,
-        .name_len   = tag_name_len,
-        .value      = head,
-        .value_len  = 0,
-    };
-    event_list_insert(list, &start_tag_event);
-    while(tag_helper(p, &p, list));
-    space(p, &p, list);
-    if(strncmp(p, "/>", 2) != 0)return flag;
-    p += 2;
     event_t empty_tag_event={
         .type       = EVENT_EMPTY_ELEMENT,
         .offset     = head - glo.file_buf,
@@ -100,7 +122,12 @@ int emptyelemtag(char* p, char** next_pos, event_list_t* list){
         .value      = head,
         .value_len  = 0,
     };
-    event_list_insert(list, &empty_tag_event);
+    event_node_t* insert_point = list->tail;
+    while(tag_helper(p, &p, list));
+    space(p, &p, list);
+    if(strncmp(p, "/>", 2) != 0)return flag;
+    p += 2;
+    event_list_insert_after(list, insert_point, &empty_tag_event);
     flag = 1;
     *next_pos = p;
     return flag;
@@ -146,11 +173,12 @@ int stag(char* p, char** next_pos, event_list_t* list){
         .value      = head,
         .value_len  = 0,
     };
-    event_list_insert(list, &start_tag_event);
+    event_node_t* insert_point = list->tail;
     while(tag_helper(p, &p, list));
     space(p, &p, list);
     if(*p != '>')return flag;
     p++;
+    event_list_insert_after(list, insert_point, &start_tag_event);
     flag = 1;
     *next_pos = p;
     return flag;
