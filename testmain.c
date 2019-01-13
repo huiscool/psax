@@ -17,8 +17,15 @@ void* event_handler(const event_t* event){
         "EVENT_CDATA", 
     };
     printf("event type: %s\n", event_names[ (int)event->type ]);
-    printf("name: %s\n", event->name);
-    printf("value: %s\n", event->value);
+    printf("name:\n");
+    for(int i=0; i<event->name_len; i++){
+        printf("%c",event->name[i]);
+    }
+    printf("\nvalue:\n");
+    for(int i=0; i<event->value_len; i++){
+        printf("%c",event->value[i]);
+    }
+    printf("\n\n");
     return (void*)0;
 }
 

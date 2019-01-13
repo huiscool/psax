@@ -102,6 +102,12 @@ void delimiter_list_insert(delimiter_list_t* list, const char* p){
     }
 }
 delimiter_list_t delimiter_list_merge(delimiter_list_t* list1, delimiter_list_t* list2){
+    if(list1->tail == NULL){
+        return (delimiter_list_t){
+            .head = list2->head,
+            .tail = list2->tail,
+        };
+    }
     list1->tail->next = list2->head;
     return (delimiter_list_t){
         .head = list1->head,
@@ -136,7 +142,7 @@ void* bcs_chunk_workload(void* p_glov){
             static char* end_delimiters[] = {"-->","?>","]]>",};
             static int end_delimiter_len[] = {3, 2, 3,};
             for(int k=0; k<special_delimiter_counts; k++){
-                int64_t j = i - end_delimiter_len[k];
+                int64_t j = i + 1 - end_delimiter_len[k];
                 if(strncmp(&buf[j], end_delimiters[k], end_delimiter_len[k]) == 0){
                     delimiter_list_insert(&list_e, &buf[j]);
                     flag |= 1<<k;
@@ -151,6 +157,22 @@ void* bcs_chunk_workload(void* p_glov){
     }
     glo->list_start[tid] = list_s;
     glo->list_end[tid] = list_e;
+    pthread_barrier_wait(&(glo->barrier));
+    if(tid == 0){
+        list_e.head = NULL;
+        list_e.tail = NULL;
+        list_s.head = NULL;
+        list_s.tail = NULL;
+        for(int i=0; i<np; i++){
+            list_s = delimiter_list_merge(&list_s, &(glo->list_start[i]));
+            list_e = delimiter_list_merge(&list_e, &(glo->list_end[i]));
+        }
+        delimiter_node_t* ps = list_s.head;
+        delimiter_node_t* pe = list_e.head;
+        while(ps!= NULL){
+            const char* p = ps->p;
+        }
+    }
     pthread_barrier_wait(&(glo->barrier));
     return (void*)0;
 }
@@ -184,7 +206,7 @@ void produce_bcs_chunks(bcs_t* chunks, glov_t* glo){
     int np = glo->np;
     pthread_t threads[np];
     for(int i=0; i<np; i++){
-        pthread_create(&threads[i], NULL, bcs_chunk_workload, glo);
+        pthread_create(&threads[i], NULL, bcs_chunk_workload, &pre_glo);
     }
     for(int i=0; i<np; i++){
         pthread_join(threads[i], NULL);

@@ -1,10 +1,10 @@
 CC = gcc
-TID = 1
+TID = 2
 TESTFLAGS = -DTEST_$(TID)
 DEBUGFLAGS = -DDEBUG -g
 CFLAGS = -I.
 PROCESS_NUM = 1
-FILE_NAME = test3.xml
+FILE_NAME = test2.xml
 OBJS = parse.o preprocess.o sendrecvbuf.o psax.o pthread_barriers.o
 
 

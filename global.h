@@ -127,36 +127,45 @@ typedef struct event_list{
     event_node_t* tail;
 } event_list_t;
 
-void list_init(event_list_t* list);
-void list_destroy(event_list_t* list);
-void list_insert(event_list_t* list, const event_t* event);
-event_list_t list_merge(event_list_t* list1, event_list_t* list2);
+void event_list_init(event_list_t* list);
+void event_list_destroy(event_list_t* list);
+void event_list_insert(event_list_t* list, const event_t* event);
+event_list_t event_list_merge(event_list_t* list1, event_list_t* list2);
 event_list_t parse(bcs_t bcs);
 
-int element(char* p, char** next_pos);
-int emptyelemtag(char* p, char** next_pos);
-int attribute(char* p, char** next_pos);
-int stag(char* p, char** next_pos);
-int etag(char* p, char** next_pos);
-int content(char* p, char** next_pos);
-int comment(char* p, char** next_pos);
-int pi(char* p, char** next_pos);
-int pitarget(char* p, char** next_pos);
-int cdsect(char* p, char** next_pos);
-int cdstart(char* p, char** next_pos);
-int cdata(char* p, char** next_pos);
-int cdend(char* p, char** next_pos);
-int namestartchar(char* p, char** next_pos);
-int namechar(char* p, char** next_pos);
-int name(char* p, char** next_pos);
-int attvalue(char* p, char** next_pos);
-int reference(char* p, char** next_pos);
-int entityref(char* p, char** next_pos);
-int charref(char* p, char** next_pos);
-int chardata(char* p, char** next_pos);
-int eq(char* p, char** next_pos);
-int space(char* p, char** next_pos);
-int charc(char* p, char** next_pos);
+typedef struct parse_glov{
+    int np;
+    event_list_t* lists;
+} parse_glov_t;
+parse_glov_t par_glo;
+
+void parse_glov_init(parse_glov_t* par_glo, glov_t* glo);
+void parse_glov_destroy(parse_glov_t* par_glo);
+
+int element(char* p, char** next_pos, event_list_t* list);
+int emptyelemtag(char* p, char** next_pos, event_list_t* list);
+int attribute(char* p, char** next_pos, event_list_t* list);
+int stag(char* p, char** next_pos, event_list_t* list);
+int etag(char* p, char** next_pos, event_list_t* list);
+int content(char* p, char** next_pos, event_list_t* list);
+int comment(char* p, char** next_pos, event_list_t* list);
+int pi(char* p, char** next_pos, event_list_t* list);
+int pitarget(char* p, char** next_pos, event_list_t* list);
+int cdsect(char* p, char** next_pos, event_list_t* list);
+int cdstart(char* p, char** next_pos, event_list_t* list);
+int cdata(char* p, char** next_pos, event_list_t* list);
+int cdend(char* p, char** next_pos, event_list_t* list);
+int namestartchar(char* p, char** next_pos, event_list_t* list);
+int namechar(char* p, char** next_pos, event_list_t* list);
+int name(char* p, char** next_pos, event_list_t* list);
+int attvalue(char* p, char** next_pos, event_list_t* list);
+int reference(char* p, char** next_pos, event_list_t* list);
+int entityref(char* p, char** next_pos, event_list_t* list);
+int charref(char* p, char** next_pos, event_list_t* list);
+int chardata(char* p, char** next_pos, event_list_t* list);
+int eq(char* p, char** next_pos, event_list_t* list);
+int space(char* p, char** next_pos, event_list_t* list);
+int charc(char* p, char** next_pos, event_list_t* list);
 ////////////////////////////////////////////////////////////////
 
 #endif //__GLOBAL_H__

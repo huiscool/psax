@@ -1,10 +1,10 @@
 #include "global.h"
 
-void list_init(event_list_t* list){
+void event_list_init(event_list_t* list){
     list->head = NULL;
     list->tail = NULL;
 }
-void list_destroy(event_list_t* list){
+void event_list_destroy(event_list_t* list){
     event_node_t* p = list->head;
     while(p!=NULL){
         event_node_t* next = p->next;
@@ -12,7 +12,7 @@ void list_destroy(event_list_t* list){
         p = next;
     }
 }
-void list_insert(event_list_t* list, const event_t* event){
+void event_list_insert(event_list_t* list, const event_t* event){
     event_node_t* new_node = malloc(sizeof(event_node_t));
     memcpy(&(new_node->event), event, sizeof(event_t));
     new_node->next = NULL;
@@ -24,7 +24,7 @@ void list_insert(event_list_t* list, const event_t* event){
         list->tail = new_node;
     }
 }
-event_list_t list_merge(event_list_t* list1, event_list_t* list2){
+event_list_t event_list_merge(event_list_t* list1, event_list_t* list2){
     list1->tail->next = list2->head;
     return (event_list_t){
         .head = list1->head,
@@ -32,89 +32,160 @@ event_list_t list_merge(event_list_t* list1, event_list_t* list2){
     };
 }
 
+
 event_list_t parse(bcs_t bcs){
     
 }
 
-int element(char* p, char** next_pos){
+void parse_glov_init(parse_glov_t* par_glo, glov_t* glo){
+    int np = glo->np;
+    par_glo->np = np;
+    par_glo->lists = malloc(np * sizeof(event_list_t));
+}
+
+void parse_glov_destroy(parse_glov_t* par_glo){
+    free(par_glo->lists);
+}
+
+
+int element(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
-    if(emptyelemtag(p, &p)){
+    if(emptyelemtag(p, &p, list)){
     }else{
-        if(!stag(p, &p))return flag;
-        if(!content(p, &p))return flag;
-        if(!etag(p, &p))return flag;
+        if(!stag(p, &p, list))return flag;
+        if(!content(p, &p, list))return flag;
+        if(!etag(p, &p, list))return flag;
     }
     flag = 1;
     *next_pos = p;
     return flag;
 }
-int tag_helper(char* p, char** next_pos){
+int tag_helper(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
-    if(!space(p, &p))return flag;
-    if(!attribute(p, &p))return flag;
+    if(!space(p, &p, list))return flag;
+    if(!attribute(p, &p, list))return flag;
     flag = 1;
     *next_pos = p;
     return flag;
 }
-int emptyelemtag(char* p, char** next_pos){
+int emptyelemtag(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
     if(*p != '<')return flag;
     p++;
-    if(!name(p, &p))return flag;
-    while(tag_helper(p, &p));
-    space(p, &p);
+    char* tag_name = p;
+    if(!name(p, &p, list))return flag;
+    int tag_name_len = p - tag_name;
+    event_t start_tag_event={
+        .type       = EVENT_ELEMENT_BEGIN,
+        .offset     = head - glo.file_buf,
+        .name       = tag_name,
+        .name_len   = tag_name_len,
+        .value      = head,
+        .value_len  = 0,
+    };
+    event_list_insert(list, &start_tag_event);
+    while(tag_helper(p, &p, list));
+    space(p, &p, list);
     if(strncmp(p, "/>", 2) != 0)return flag;
     p += 2;
+    event_t empty_tag_event={
+        .type       = EVENT_EMPTY_ELEMENT,
+        .offset     = head - glo.file_buf,
+        .name       = tag_name,
+        .name_len   = tag_name_len,
+        .value      = head,
+        .value_len  = 0,
+    };
+    event_list_insert(list, &empty_tag_event);
     flag = 1;
     *next_pos = p;
     return flag;
 }
-int attribute(char* p, char** next_pos){
+int attribute(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
-    if(!name(p, &p))return flag;
-    if(!eq(p, &p))return flag;
-    if(!attvalue(p, &p))return flag;
+    char* attr_name = p;
+    if(!name(p, &p, list))return flag;
+    int attr_name_len = p - attr_name;
+    if(!eq(p, &p, list))return flag;
+    char* attr_value = p;
+    if(!attvalue(p, &p, list))return flag;
+    int attr_value_len = p - attr_value;
+    event_t attr_event={
+        .type       = EVENT_ATTRIBUTE,
+        .offset     = head - glo.file_buf,
+        .name       = attr_name,
+        .name_len   = attr_name_len,
+        .value      = attr_value,
+        .value_len  = attr_value_len,
+    };
+    event_list_insert(list, &attr_event);
     flag = 1;
     *next_pos = p;
     return flag;
 }
-int stag(char* p, char** next_pos){
+int stag(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
     if(*p != '<')return flag;
     p++;
-    if(!name(p, &p))return flag;
-    while(tag_helper(p, &p));
-    space(p, &p);
+    char* tag_name = p;
+    if(!name(p, &p, list))return flag;
+    int tag_name_len = p - tag_name;
+    event_t start_tag_event={
+        .type       = EVENT_ELEMENT_BEGIN,
+        .offset     = head - glo.file_buf,
+        .name       = tag_name,
+        .name_len   = tag_name_len,
+        .value      = head,
+        .value_len  = 0,
+    };
+    event_list_insert(list, &start_tag_event);
+    while(tag_helper(p, &p, list));
+    space(p, &p, list);
     if(*p != '>')return flag;
     p++;
     flag = 1;
     *next_pos = p;
     return flag;
 }
-int etag(char* p, char** next_pos){
+int etag(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
     if(strncmp(p, "</", 2) != 0)return flag;
     p += 2;
-    if(!name(p, &p))return flag;
-    space(p, &p);
+    char* tag_name = p;
+    if(!name(p, &p, list))return flag;
+    int tag_name_len = p - tag_name;
+    event_t end_tag_event={
+        .type       = EVENT_ELEMENT_END,
+        .offset     = head - glo.file_buf,
+        .name       = tag_name,
+        .name_len   = tag_name_len,
+        .value      = head,
+        .value_len  = 0,
+    };
+    event_list_insert(list, &end_tag_event);
+    space(p, &p, list);
     if(*p != '>')return flag;
     p++;
     flag = 1;
     *next_pos = p;
     return flag;
 }
-int content_helper(char* p, char** next_pos){
+int content_helper(char* p, char** next_pos, event_list_t* list){
     char* head = p;
     int flag = 0;
-    if(element(p, next_pos)|| reference(p, next_pos) || cdsect(p, next_pos) || pi(p, next_pos) || comment(p, next_pos)){
+    if(element(p, next_pos, list)|| reference(p, next_pos, list) || cdsect(p, next_pos, list) || pi(p, next_pos, list) || comment(p, next_pos, list)){
         p = *next_pos;
-        chardata(p, &p);
+        chardata(p, &p, list);
         *next_pos = p;
         flag = 1;
         return flag;
@@ -122,69 +193,94 @@ int content_helper(char* p, char** next_pos){
     *next_pos = head;
     return flag;
 }
-int content(char* p, char** next_pos){
+int content(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
-    chardata(p, &p);
-    while(content_helper(p, &p));
+    chardata(p, &p, list);
+    while(content_helper(p, &p, list));
     *next_pos = p;
     flag = 1;
     return flag;
 }
-int comment_helper(char* p, char** next_pos){
+int comment_helper(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
     if(*p == '-')p++;
     if(*p == '-')return flag;
-    if(!charc(p, &p))return flag;
+    if(!charc(p, &p, list))return flag;
     *next_pos = p;
     flag = 1;
     return flag;
 }
-int comment(char* p, char** next_pos){
+int comment(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
     if(strncmp(p, "<!--", 4) != 0)return flag;
     p += 4;
-    while(comment_helper(p, &p));
+    char* value = p;
+    while(comment_helper(p, &p, list));
+    int value_len = p - value;
     if(strncmp(p, "-->", 3) != 0)return flag;
     p += 3;
+    event_t comment_event={
+        .type       = EVENT_COMMENT,
+        .offset     = head - glo.file_buf,
+        .name       = head,
+        .name_len   = 0,
+        .value      = value,
+        .value_len  = value_len,
+    };
+    event_list_insert(list, &comment_event);
     *next_pos = p;
     flag = 1;
     return flag;
 }
-int pi_helper(char* p, char** next_pos){
+int pi_helper(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
-    if(!space(p, &p))return flag;
+    if(!space(p, &p, list))return flag;
     while(1){
         if(*p == '?' && strncmp(p, "?>", 2) == 0)break;
-        else if(charc(p, &p))continue;
+        else if(charc(p, &p, list))continue;
         else break;
     }
     *next_pos = p;
     flag = 1;
     return flag; 
 }
-int pi(char* p, char** next_pos){
+int pi(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
     if(strncmp(p, "<?", 2) != 0)return flag;
     p += 2;
-    while(space(p, &p));
-    if(!pitarget(p, &p))return flag;
-    pi_helper(p, &p);
+    while(space(p, &p, list));
+    char* pi_name = p;
+    if(!pitarget(p, &p, list))return flag;
+    int pi_name_len = p - pi_name;
+    char* pi_value = p;
+    pi_helper(p, &p, list);
     if(strncmp(p, "?>", 2) != 0)return flag;
+    int pi_value_len = p - pi_value;
     p += 2;
     *next_pos = p;
     flag = 1;
+    event_t pi_event={
+        .type       = EVENT_PI,
+        .offset     = head - glo.file_buf,
+        .name       = pi_name,
+        .name_len   = pi_name_len,
+        .value      = pi_value,
+        .value_len  = pi_value_len,
+    };
+    event_list_insert(list, &pi_event);
     return flag;
 }
-
-int pitarget(char* p, char** next_pos){
+int pitarget(char* p, char** next_pos, event_list_t* list){
     char* head = p;
     int flag = 0;
-    if(!name(p, next_pos))return flag;
+    if(!name(p, next_pos, list))return flag;
     else{
         flag = 1;
         if(*p != 'X' && *p != 'x')return flag;
@@ -200,17 +296,29 @@ int pitarget(char* p, char** next_pos){
     }
     return flag;
 }
-int cdsect(char* p, char** next_pos){
+int cdsect(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
     *next_pos = p;
     int flag = 0;
-    if(!cdstart(p, &p)){return flag;}
-    if(!cdata(p, &p)){return flag;}
-    if(!cdend(p, &p)){return flag;}
+    if(!cdstart(p, &p, list)){return flag;}
+    char* value = p;
+    if(!cdata(p, &p, list)){return flag;}
+    int value_len = p - value;
+    if(!cdend(p, &p, list)){return flag;}
+    event_t cdata_event={
+        .type       = EVENT_CDATA,
+        .offset     = head - glo.file_buf,
+        .name       = head,
+        .name_len   = 0,
+        .value      = value,
+        .value_len  = value_len,
+    };
+    event_list_insert(list, &cdata_event);
     *next_pos = p;
     flag = 1;
     return flag;
 }
-int cdstart(char* p, char** next_pos){
+int cdstart(char* p, char** next_pos, event_list_t* list){
     int flag = 0;
     if(strncmp(p, "<![CDATA[", 9) == 0){
         flag = 1;
@@ -219,17 +327,17 @@ int cdstart(char* p, char** next_pos){
     *next_pos = p;
     return flag;
 }
-int cdata(char* p, char** next_pos){
+int cdata(char* p, char** next_pos, event_list_t* list){
     int flag = 1;
     while(1){
         if(*p == ']' && strncmp(p, "]]>", 3) == 0)break;
-        else if(charc(p, &p))continue;
+        else if(charc(p, &p, list))continue;
         else break;
     }
     *next_pos = p;
     return flag;
 }
-int cdend(char* p, char** next_pos){
+int cdend(char* p, char** next_pos, event_list_t* list){
     int flag = 0;
     if(strncmp(p, "]]>", 3) == 0){
         flag = 1;
@@ -238,7 +346,7 @@ int cdend(char* p, char** next_pos){
     *next_pos = p;
     return flag;
 }
-int namestartchar(char* p, char** next_pos){
+int namestartchar(char* p, char** next_pos, event_list_t* list){
     int flag = 0;
     if(*p == ':' || ('A' <= *p && *p <= 'Z') || *p == '_' || ('a' <= *p && *p <= 'z')){
         p++;
@@ -247,9 +355,9 @@ int namestartchar(char* p, char** next_pos){
     *next_pos = p;
     return flag;
 }
-int namechar(char* p, char** next_pos){
+int namechar(char* p, char** next_pos, event_list_t* list){
     int flag = 0;
-    if(namestartchar(p, next_pos))return 1;
+    if(namestartchar(p, next_pos, list))return 1;
     if(*p == '-' || ('0' <= *p && *p <= '9') || *p == '.'){
         p++;
         flag = 1;
@@ -257,13 +365,13 @@ int namechar(char* p, char** next_pos){
     *next_pos = p;
     return flag;
 }
-int name(char* p, char** next_pos){
-    if(!namestartchar(p, next_pos))return 0;
-    while(namechar(p, &p));
+int name(char* p, char** next_pos, event_list_t* list){
+    if(!namestartchar(p, next_pos, list))return 0;
+    while(namechar(p, &p, list));
     *next_pos = p;
     return 1;
 }
-int attvalue(char* p, char** next_pos){
+int attvalue(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     char c;
     int flag = 0;
@@ -271,7 +379,7 @@ int attvalue(char* p, char** next_pos){
     else {c = *p; p++;}
     while(1){
         if(*p != '<' && *p != '&' && *p != c){p++;continue;}
-        else if(reference(p,&p))continue;
+        else if(reference(p, &p, list))continue;
         else break;
     }
     if(*p != c){return flag;}
@@ -280,24 +388,24 @@ int attvalue(char* p, char** next_pos){
     flag = 1;
     return flag;
 }
-int reference(char* p, char** next_pos){
-    if(entityref(p, next_pos))return 1;
-    else if(charref(p, next_pos))return 1;
+int reference(char* p, char** next_pos, event_list_t* list){
+    if(entityref(p, next_pos, list))return 1;
+    else if(charref(p, next_pos, list))return 1;
     else return 0;
 }
-int entityref(char* p, char** next_pos){
+int entityref(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
     if(*p != '&'){return flag;}
     p++;
-    if(!name(p, &p)){return flag;}
+    if(!name(p, &p, list)){return flag;}
     if(*p != ';'){return flag;}
     p++;
     *next_pos = p;
     flag = 1;
     return flag;
 }
-int charref(char* p, char** next_pos){
+int charref(char* p, char** next_pos, event_list_t* list){
     *next_pos = p;
     int flag = 0;
     if(strncmp(p, "&#x", 3) == 0){
@@ -316,7 +424,7 @@ int charref(char* p, char** next_pos){
     if(flag)*next_pos = p;
     return flag;
 }
-int chardata(char* p, char** next_pos){
+int chardata(char* p, char** next_pos, event_list_t* list){
     char* head = p;
     int flag = 1;
     while(*p != '<' && *p != '&' && *p != '\0'){
@@ -328,20 +436,20 @@ int chardata(char* p, char** next_pos){
     *next_pos = p;
     return flag;
 }
-int eq(char* p, char** next_pos){
+int eq(char* p, char** next_pos, event_list_t* list){
     char* head = p;
     int flag = 0;
-    space(p, &p);
+    space(p, &p, list);
     if(*p == '='){
         flag = 1;
         p++;
     }
-    space(p, &p);
+    space(p, &p, list);
     if(flag)*next_pos = p;
     else *next_pos = head;
     return flag;
 }
-int space(char* p, char** next_pos){
+int space(char* p, char** next_pos, event_list_t* list){
     int flag = 0;
     while(*p == 0x20 || *p == 0x9 || *p == 0xD || *p == 0xA){
         flag = 1;
@@ -350,7 +458,8 @@ int space(char* p, char** next_pos){
     *next_pos = p;
     return flag;
 }
-int charc(char* p, char** next_pos){
+int charc(char* p, char** next_pos, event_list_t* list){
+    char* head =0;
     int flag = 0;
     if(0x20 <= *p && *p <= 0x7F)flag = 1;
     if(*p == 0x9 || *p == 0xA || *p == 0xD)flag = 1;

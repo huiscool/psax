@@ -1,7 +1,7 @@
 #ifndef __PSAX_H__
 #define __PSAX_H__
 #include <stdlib.h>
-typedef enum{
+typedef enum event_type{
     EVENT_DOCUMENT_BEGIN  = 0,
     EVENT_DOCUMENT_END    = 1,
     EVENT_ELEMENT_BEGIN   = 2,
@@ -14,7 +14,7 @@ typedef enum{
     EVENT_CDATA           = 9,
 } event_type_t;
 
-typedef enum{
+typedef enum error_type{
     THREAD_NUM_ERROR    = 0,
     FILE_OPEN_ERROR     = 1,
     LEXICAL_ERROR       = 2,

@@ -104,16 +104,20 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     //char* a = "<? pi example 20<30 ?>";
     //char* p = a;
     char* p = glo.file_buf;
-    printf("%d:%s\n", content(p, &p), p);
-#endif //TEST_2
-    
-
-
-    close_file(&glo);
+    event_list_t list;
+    event_list_init(&list);
+    printf("%d:%s\n", content(p, &p, &list), p);
 #ifdef DEBUG
     clock_t end_time = clock();
     double dur = 1000.0 * (end_time - start_time) / CLOCKS_PER_SEC;
-    debug_printf("time: %lf ms\n", dur);
 #endif //DEBUG
+    event_node_t* node_p = list.head;
+    while(node_p!= NULL){
+        event_handler(&(node_p->event));
+        node_p = node_p->next;
+    }
+#endif //TEST_2
+    close_file(&glo);
+    debug_printf("time: %lf ms\n", dur);
     return 0;
 }
