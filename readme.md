@@ -1,6 +1,8 @@
-#PSAX
+# PSAX
 
-利用posix pthread库的事件驱动式的并行XML解析器
+
+利用posix pthread库的事件驱动式的并行XML解析器😏
+
 
 
 
@@ -16,7 +18,7 @@
 
 ## PSAX特点
 
-* 快
+* 快👻
 
 
 
