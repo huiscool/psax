@@ -22,22 +22,21 @@ typedef enum error_type{
 } error_type_t;
 
 #define MSG_BUF_SIZE 1024
-#define SEND_RECV_BUF_SIZE 1024
 
 typedef struct error{
-    error_type_t type;
-    int64_t row;
-    int64_t col;
-    char msg[MSG_BUF_SIZE];
+    error_type_t    type;
+    int64_t         row;
+    int64_t         col;
+    char            msg[MSG_BUF_SIZE];
 } error_t;
 
 typedef struct event{
-    event_type_t type;
-    int64_t offset;
-    const char* name;
-    int name_len;
-    const char* value;
-    int value_len;
+    event_type_t    type;
+    int64_t         offset;
+    const char*     name;
+    int             name_len;
+    const char*     value;
+    int             value_len;
 } event_t;
 
 typedef void* (*event_handler_t)(const event_t* event);

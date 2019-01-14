@@ -13,8 +13,11 @@
 #include "pthread_barriers.h"
 #endif //__APPLE__
 
-#ifdef DEBUG
+#ifdef PERFORMANCE
 #include <time.h>
+#endif //PERFORMANCE
+
+#ifdef DEBUG
 #define debug_printf(...) printf(__VA_ARGS__)
 #include <assert.h>
 #else

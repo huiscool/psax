@@ -42,7 +42,9 @@ void close_file(glov_t* glo){
 
 int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t error_handler, const char* filename){
 #ifdef PERFORMANCE
-    clock_t start_time = clock();
+    struct timespec start, finish;
+    double elapsed;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 #endif //PERFORMANCE
     glo.error_handler = error_handler;
     glo.event_handler = event_handler;
@@ -54,6 +56,7 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
         return -1;
     }
     open_file(filename, &glo);
+    
 #ifdef SERIAL
     event_list_t list;
     event_list_init(&list);
@@ -63,23 +66,25 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     event_list_t final_list = post_process(&glo, &list);
     printf("res:%d, a:%s\n", res, a);
 #endif //SERIAL
+
 #ifdef PARALLEL
     bcs_list_t* blists = preprocess(&glo);
     event_list_t* elists = glo_parse(&glo, blists);
     event_list_t final_list = post_process(&glo, elists);
+
 #endif //PARALLEL
-    clock_t mid_time = clock();
-    double ms1 = 1000 * (mid_time - start_time) / CLOCKS_PER_SEC;
+#ifdef PERFORMANCE
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+    elapsed = (finish.tv_sec - start.tv_sec);
+    elapsed += (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    printf("parse time: %f ms\n", elapsed);
+#endif //PERFORMANCE
     event_node_t* p = final_list.head;
     while(p != NULL){
         event_handler(&(p->event));
         p = p->next;
     }
     close_file(&glo);
-#ifdef PERFORMANCE
-    clock_t end_time = clock();
-    double ms2 = 1000 * (end_time - start_time) / CLOCKS_PER_SEC;
-    printf("parse time: %f ms,\n event time: %f ms\n", ms1, ms2);
-#endif //PERFORMANCE
+
     return 0;
 }
