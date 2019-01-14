@@ -60,41 +60,26 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     char* a = glo.file_buf;
     //char* a = "</a>  ";
     int res = content(a, &a, &list);
-    event_node_t* p = list.head;
-    par_glo.np = 1;
-    par_glo.lists = &list;
-    list = post_process(&par_glo);
-    while(p != NULL){
-        event_handler(&(p->event));
-        p = p->next;
-    }
-    event_list_destroy(&list);
+    event_list_t final_list = post_process(&glo, &list);
     printf("res:%d, a:%s\n", res, a);
 #endif //SERIAL
 #ifdef PARALLEL
     bcs_list_t* blists = preprocess(&glo);
-    // for(int i=0; i<np; i++){
-    //     bcs_node_t* p = lists[i].head;
-    //     printf("%d:\n",i);
-    //     while(p!=NULL){
-    //         printf("%d%c%c%c%c\n",p->type, p->p[0], p->p[1], p->p[2], p->p[3]);
-    //         p = p->next;
-    //     }
-    //     printf("\n");
-    // }
     event_list_t* elists = glo_parse(&glo, blists);
     event_list_t final_list = post_process(&glo, elists);
+#endif //PARALLEL
+    clock_t mid_time = clock();
+    double ms1 = 1000 * (mid_time - start_time) / CLOCKS_PER_SEC;
     event_node_t* p = final_list.head;
     while(p != NULL){
         event_handler(&(p->event));
         p = p->next;
     }
-#endif //PARALLEL
     close_file(&glo);
 #ifdef PERFORMANCE
     clock_t end_time = clock();
-    double ms = 1000 * (end_time - start_time) / CLOCKS_PER_SEC;
-    printf("time: %f ms\n", ms);
+    double ms2 = 1000 * (end_time - start_time) / CLOCKS_PER_SEC;
+    printf("parse time: %f ms,\n event time: %f ms\n", ms1, ms2);
 #endif //PERFORMANCE
     return 0;
 }

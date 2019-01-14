@@ -79,7 +79,7 @@ typedef enum bcs_type{
 
 typedef struct bcs_node{
     bcs_type_t type;
-    const char* p;
+    char* p;
     struct bcs_node* next;
 } bcs_node_t;
 
@@ -90,7 +90,7 @@ typedef struct bcs_list{
 
 void bcs_list_init(bcs_list_t* list);
 void bcs_list_destroy(bcs_list_t* list);
-void bcs_list_insert(bcs_list_t* list, const char* p, bcs_type_t type);
+void bcs_list_insert(bcs_list_t* list, char* p, bcs_type_t type);
 bcs_list_t bcs_list_merge(bcs_list_t* list1, bcs_list_t* list2);
 
 typedef struct preprocess_glov{

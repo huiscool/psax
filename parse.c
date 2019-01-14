@@ -109,13 +109,15 @@ int emptyelemtag(char* p, char** next_pos, event_list_t* list){
     space(p, &p, list);
     if(strncmp(p, "/>", 2) != 0){
         //失配, 把之前插入事件流的属性清空
-        event_node_t* p_ev = insert_point->next;
-        insert_point->next = NULL;
-        list->tail = insert_point;
-        while(p_ev != NULL){
-            event_node_t* tmp = p_ev;
-            p_ev = p_ev->next;
-            free(tmp);
+        if(insert_point != NULL){
+            event_node_t* p_ev = insert_point->next;
+            insert_point->next = NULL;
+            list->tail = insert_point;
+            while(p_ev != NULL){
+                event_node_t* tmp = p_ev;
+                p_ev = p_ev->next;
+                free(tmp);
+            }
         }
         return flag;
     }
@@ -171,13 +173,15 @@ int stag(char* p, char** next_pos, event_list_t* list){
     space(p, &p, list);
     if(*p != '>'){
         //失配, 把之前插入事件流的属性清空
-        event_node_t* p_ev = insert_point->next;
-        insert_point->next = NULL;
-        list->tail = insert_point;
-        while(p_ev != NULL){
-            event_node_t* tmp = p_ev;
-            p_ev = p_ev->next;
-            free(tmp);
+        if(insert_point != NULL){
+            event_node_t* p_ev = insert_point->next;
+            insert_point->next = NULL;
+            list->tail = insert_point;
+            while(p_ev != NULL){
+                event_node_t* tmp = p_ev;
+                p_ev = p_ev->next;
+                free(tmp);
+            }
         }
         return flag;
     }
@@ -586,7 +590,7 @@ void loc_parse(event_list_t* elist, bcs_list_t* blist){
 }
 
 void* parse_workload(void* p_par_glo){
-    static id = 0;
+    static int id = 0;
     int tid = __sync_fetch_and_add(&id, 1);
     parse_glov_t* par_glo = p_par_glo;
     loc_parse(&(par_glo->elists[tid]), &(par_glo->blists[tid]));

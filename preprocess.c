@@ -12,7 +12,7 @@ void bcs_list_destroy(bcs_list_t* list){
         p = next;
     }
 }
-void bcs_list_insert(bcs_list_t* list, const char* p, bcs_type_t type){
+void bcs_list_insert(bcs_list_t* list, char* p, bcs_type_t type){
     bcs_node_t* new_node = malloc(sizeof(bcs_node_t));
     new_node->p = p;
     new_node->type = type;
