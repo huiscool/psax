@@ -38,6 +38,12 @@ void event_list_insert_after(event_list_t* list, event_node_t* node, const event
     }
 }
 event_list_t event_list_merge(event_list_t* list1, event_list_t* list2){
+    if(list1->tail == NULL){
+        return (event_list_t){
+            .head = list2->head,
+            .tail = list2->tail,
+        };
+    }
     list1->tail->next = list2->head;
     return (event_list_t){
         .head = list1->head,
@@ -45,14 +51,18 @@ event_list_t event_list_merge(event_list_t* list1, event_list_t* list2){
     };
 }
 
-void parse_glov_init(parse_glov_t* par_glo, glov_t* glo){
+void parse_glov_init(parse_glov_t* par_glo, glov_t* glo, bcs_list_t* blists){
     int np = glo->np;
     par_glo->np = np;
-    par_glo->lists = malloc(np * sizeof(event_list_t));
+    par_glo->elists = malloc(np * sizeof(event_list_t));
+    for(int i=0; i<np; i++){
+        event_list_init(&(par_glo->elists[i]));
+    }
+    par_glo->blists = blists;
 }
 
 void parse_glov_destroy(parse_glov_t* par_glo){
-    free(par_glo->lists);
+    free(par_glo->elists);
 }
 
 int element(char* p, char** next_pos, event_list_t* list){
@@ -97,7 +107,18 @@ int emptyelemtag(char* p, char** next_pos, event_list_t* list){
     event_node_t* insert_point = list->tail;
     while(tag_helper(p, &p, list));
     space(p, &p, list);
-    if(strncmp(p, "/>", 2) != 0)return flag;
+    if(strncmp(p, "/>", 2) != 0){
+        //失配, 把之前插入事件流的属性清空
+        event_node_t* p_ev = insert_point->next;
+        insert_point->next = NULL;
+        list->tail = insert_point;
+        while(p_ev != NULL){
+            event_node_t* tmp = p_ev;
+            p_ev = p_ev->next;
+            free(tmp);
+        }
+        return flag;
+    }
     p += 2;
     event_list_insert_after(list, insert_point, &empty_tag_event);
     flag = 1;
@@ -148,7 +169,18 @@ int stag(char* p, char** next_pos, event_list_t* list){
     event_node_t* insert_point = list->tail;
     while(tag_helper(p, &p, list));
     space(p, &p, list);
-    if(*p != '>')return flag;
+    if(*p != '>'){
+        //失配, 把之前插入事件流的属性清空
+        event_node_t* p_ev = insert_point->next;
+        insert_point->next = NULL;
+        list->tail = insert_point;
+        while(p_ev != NULL){
+            event_node_t* tmp = p_ev;
+            p_ev = p_ev->next;
+            free(tmp);
+        }
+        return flag;
+    }
     p++;
     event_list_insert_after(list, insert_point, &start_tag_event);
     flag = 1;
@@ -470,36 +502,110 @@ int charc(char* p, char** next_pos, event_list_t* list){
 
 ////////////////////////////////////////////////////////////////
 
-event_list_t glo_parse(bcs_list_t* blist){
-    
 
+
+int start_tag_or_empty_tag(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
+    *next_pos = p;
+    int flag = 0;
+    if(!stag(p, &p, list) && !emptyelemtag(p, &p, list))return flag;
+    chardata(p, &p, list);
+    *next_pos = p;
+    flag = 1;
+    return flag;
+}
+
+int end_tag(char* p, char** next_pos, event_list_t* list){
+    char* head = p;
+    *next_pos = p;
+    int flag = 0;
+    if(!etag(p, &p, list))return flag;
+    chardata(p, &p, list);
+    *next_pos = p;
+    flag = 1;
+    return flag;
+}
+
+int end_pi_or_comment_or_cdata(char* p, char** next_pos, event_list_t* list){
+    p++;
+    return chardata(p, next_pos, list);
+}
+
+int start_pi(char* p, char** next_pos, event_list_t* list){
+    return pi(p, next_pos, list);
+}
+
+int start_comment(char* p, char** next_pos, event_list_t* list){
+    return comment(p, next_pos, list);
+}
+
+int start_cdata(char* p, char** next_pos, event_list_t* list){
+    return cdata(p, next_pos, list);
 }
 
 void loc_parse(event_list_t* elist, bcs_list_t* blist){
-
+    bcs_node_t* ps = blist->head;
+    bcs_node_t* pe = ps->next;
+    while(pe != NULL){
+        char* p = ps->p;
+        char* p_next = pe->p;
+        switch(ps->type){
+            case BCS_START_TAG_BEGIN:
+                start_tag_or_empty_tag(p, &p, elist);
+                assert(p == p_next);
+                break;
+            case BCS_END_TAG_BEGIN:
+                end_tag(p, &p, elist);
+                assert(p == p_next);
+                break;
+            case BCS_PI_BEGIN:
+                start_pi(p, &p, elist);
+                //刚好错了一位
+                //assert(p == p_next);
+                break;
+            case BCS_COMMENT_BEGIN:
+                start_comment(p, &p, elist);
+                //assert(p == p_next);
+                break;
+            case BCS_CDATA_BEGIN:
+                start_cdata(p, &p, elist);
+                //assert(p == p_next);
+                break;
+            case BCS_COMMENT_END:
+            case BCS_PI_END:
+            case BCS_CDATA_END:
+            case BCS_TAG_END:
+            case BCS_NONE:
+                end_pi_or_comment_or_cdata(p, &p, elist);
+                assert(p == p_next);
+                break;
+        }
+        ps = pe;
+        pe = pe->next;
+    }
 }
 
+void* parse_workload(void* p_par_glo){
+    static id = 0;
+    int tid = __sync_fetch_and_add(&id, 1);
+    parse_glov_t* par_glo = p_par_glo;
+    loc_parse(&(par_glo->elists[tid]), &(par_glo->blists[tid]));
+    return (void*)0;
+}
 
-int emptyelemtag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int attribute_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int stag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int etag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int content_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int comment_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int pi_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int pitarget_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdsect_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdstart_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdend_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int namestartchar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int namechar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int name_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int attvalue_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int reference_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int entityref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int charref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int chardata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int eq_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int space_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int charc_p(char* p, char** next_pos, char* tmn, event_list_t* list);
+event_list_t* glo_parse(glov_t* glo, bcs_list_t* blists){
+    parse_glov_t par_glo;
+    parse_glov_init(&par_glo, glo, blists);
+    int np = par_glo.np;
+    pthread_t threads[np];
+    for(int i=0; i<np; i++){
+        pthread_create(&threads[i], NULL, parse_workload, &par_glo);
+    }
+    for(int i=0; i<np; i++){
+        pthread_join(threads[i], NULL);
+    }
+    event_list_t* res = malloc(np * sizeof(event_list_t));
+    memcpy(res, par_glo.elists, np * sizeof(event_list_t));
+    parse_glov_destroy(&par_glo);
+    return res;
+}

@@ -47,13 +47,14 @@ bool stack_is_empty(event_stack_t* stack){
     return stack->n == 0;
 }
 
-event_list_t post_process(parse_glov_t* par_glo){
-    int np = par_glo->np;
-    event_list_t glo_events = par_glo->lists[0];
-    for(int i=1; i<np; i++){
-       glo_events = event_list_merge(&glo_events, &(par_glo->lists[i]));
+event_list_t post_process(glov_t* glo, event_list_t* elists){
+    int np = glo->np;
+    event_list_t glo_event;
+    event_list_init(&glo_event);
+    for(int i=0; i<np; i++){
+       glo_event = event_list_merge(&glo_event, &(elists[i]));
     }
-    event_node_t* p = glo_events.head;
+    event_node_t* p = glo_event.head;
     event_stack_t stack;
     stack_init(&stack);
     for( ; p != NULL; p=p->next){
@@ -81,5 +82,5 @@ event_list_t post_process(parse_glov_t* par_glo){
         raise_error(SYNTAX_ERROR, top->offset, "tag not matched");
     }
     stack_destroy(&stack);
-    return glo_events;
+    return glo_event;
 }

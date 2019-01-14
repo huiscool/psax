@@ -57,7 +57,7 @@ void preprocess_glov_destroy(preprocess_glov_t* pre_glo){
 
 bcs_type_t recognizer(char* p){
     if(*p == '<'){
-        if(!strncmp(p, "<!", 2))return BCS_END_TAG_BEGIN;
+        if(!strncmp(p, "</", 2))return BCS_END_TAG_BEGIN;
         if(!strncmp(p, "<?", 2))return BCS_PI_BEGIN;
         if(!strncmp(p, "<!--", 4))return BCS_COMMENT_BEGIN;
         if(!strncmp(p, "<![CDATA[", 9))return BCS_CDATA_BEGIN;
@@ -110,27 +110,24 @@ void delete_wrong_bcs_in_glo_blist(preprocess_glov_t* pre_glo, int tid){
             bcs_type_t ps_type = ps->type;
             bcs_node_t* pe = ps->next;
             if(ps_type == BCS_CDATA_BEGIN || ps_type == BCS_PI_BEGIN || ps_type == BCS_COMMENT_BEGIN){
-                if(pe == NULL)raise_error(SYNTAX_ERROR, ps->p - buf, "cdata, pi, comment not matched");
-                while(pe != NULL){
-                    bcs_type_t pe_type = pe->type;
-                    if(pe_type == ps_type + 1){
-                        break;
-                    }else{
-                        bcs_node_t* tmp = pe;
-                        pe = pe->next;
-                        free(tmp);
-                    }
+                while(pe != NULL && pe->type != ps_type + 1){
+                    bcs_node_t* tmp = pe;
+                    pe = pe->next;
+                    free(tmp);
                 }
+                if(pe == NULL)raise_error(SYNTAX_ERROR, ps->p - buf, "cdata, pi, comment not matched");
+                // ps->next = pe->next;
+                // free(pe);
                 ps->next = pe;
                 ps= ps->next;
                 continue;
             }
-            if( pe!= NULL && ( pe->type == BCS_TAG_END || pe->type == BCS_COMMENT_END || pe->type == BCS_PI_END || pe->type == BCS_CDATA_END )){
-                bcs_node_t* tmp = pe;
-                ps->next = pe->next;
-                free(tmp);
-                continue;
-            }
+            // if( pe!= NULL && ( pe->type == BCS_TAG_END || pe->type == BCS_COMMENT_END || pe->type == BCS_PI_END || pe->type == BCS_CDATA_END )){
+            //     bcs_node_t* tmp = pe;
+            //     ps->next = pe->next;
+            //     free(tmp);
+            //     continue;
+            // }
             ps = ps->next;
         }
     }
@@ -171,9 +168,9 @@ void divide_global_bcs_list(preprocess_glov_t* pre_glo, int tid){
         //忘记插入末尾的标志位了,这里插入
         for(int i=0; i<np-1; i++){
             bcs_node_t* phead = pre_glo->lists[i+1].head;
-            bcs_list_insert(&(pre_glo->list[i]), phead->p, phead->type);
+            bcs_list_insert(&(pre_glo->lists[i]), phead->p, phead->type);
         }
-        bcs_list_insert(&(pre_glo->list[i]), buf+size, BCS_NONE);
+        bcs_list_insert(&(pre_glo->lists[np-1]), buf+size, BCS_NONE);
     }
 }
 

@@ -68,18 +68,27 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
         event_handler(&(p->event));
         p = p->next;
     }
+    event_list_destroy(&list);
     printf("res:%d, a:%s\n", res, a);
 #endif //SERIAL
 #ifdef PARALLEL
-    bcs_list_t* lists = preprocess(&glo);
+    bcs_list_t* blists = preprocess(&glo);
     // for(int i=0; i<np; i++){
     //     bcs_node_t* p = lists[i].head;
+    //     printf("%d:\n",i);
     //     while(p!=NULL){
-    //         printf("%c%c%c  ", p->p[0], p->p[1], p->p[2]);
+    //         printf("%d%c%c%c%c\n",p->type, p->p[0], p->p[1], p->p[2], p->p[3]);
     //         p = p->next;
     //     }
     //     printf("\n");
     // }
+    event_list_t* elists = glo_parse(&glo, blists);
+    event_list_t final_list = post_process(&glo, elists);
+    event_node_t* p = final_list.head;
+    while(p != NULL){
+        event_handler(&(p->event));
+        p = p->next;
+    }
 #endif //PARALLEL
     close_file(&glo);
 #ifdef PERFORMANCE

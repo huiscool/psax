@@ -126,14 +126,15 @@ event_list_t event_list_merge(event_list_t* list1, event_list_t* list2);
 
 typedef struct parse_glov{
     int np;
-    event_list_t* lists;
+    event_list_t* elists;
+    bcs_list_t* blists;
 } parse_glov_t;
 parse_glov_t par_glo;
 
-void parse_glov_init(parse_glov_t* par_glo, glov_t* glo);
+void parse_glov_init(parse_glov_t* par_glo, glov_t* glo, bcs_list_t* blists);
 void parse_glov_destroy(parse_glov_t* par_glo);
 void loc_parse(event_list_t* elist, bcs_list_t* blist);
-event_list_t glo_parse(bcs_list_t* blist);
+event_list_t* glo_parse(glov_t* glo, bcs_list_t* blists);
 
 int element(char* p, char** next_pos, event_list_t* list);
 int emptyelemtag(char* p, char** next_pos, event_list_t* list);
@@ -160,31 +161,6 @@ int eq(char* p, char** next_pos, event_list_t* list);
 int space(char* p, char** next_pos, event_list_t* list);
 int charc(char* p, char** next_pos, event_list_t* list);
 
-////////////////////////////////////////////////////////////////
-
-int emptyelemtag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int attribute_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int stag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int etag_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int content_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int comment_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int pi_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int pitarget_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdsect_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdstart_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int cdend_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int namestartchar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int namechar_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int name_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int attvalue_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int reference_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int entityref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int charref_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int chardata_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int eq_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int space_p(char* p, char** next_pos, char* tmn, event_list_t* list);
-int charc_p(char* p, char** next_pos, char* tmn, event_list_t* list);
 
 ////////////////////////////////////////////////////////////////
 typedef struct event_stack_node{
@@ -205,7 +181,7 @@ void stack_pop(event_stack_t* stack);
 void stack_push(event_stack_t* stack, const event_t* event);
 bool stack_is_empty(event_stack_t* stack);
 
-event_list_t post_process(parse_glov_t* par_glo);
+event_list_t post_process(glov_t* glo, event_list_t* elists);
 
 
 #endif //__GLOBAL_H__
