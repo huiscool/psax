@@ -16,7 +16,7 @@
 
 ## PSAX特点
 
-* 通过pthread库加快解析XML速度
+* 快
 
 
 
@@ -82,6 +82,12 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
 1. 预处理阶段: 并行查找bcs, 形成链表; 之后串行检查错误元素, 再拆分全局链表, 形成局部链表;
 2. 解析阶段: 每个线程处理一个局部链表. 根据bcs的类别, 并行解析XML, 形成局部事件流子串;
 3. 后处理阶段: 合并局部事件流形成全局事件流, 并串行检查匹配问题.
+
+
+
+![image-20190114122510624](readme.assets/image-20190114122510624.png)
+
+
 
 
 
