@@ -469,6 +469,15 @@ int chardata(char* p, char** next_pos, event_list_t* list){
         }
         p++;
     }
+    // event_t chardata_event={
+    //     .type       = EVENT_CHAR_DATA,
+    //     .offset     = head - glo.file_buf,
+    //     .name       = head,
+    //     .name_len   = 0,
+    //     .value      = p,
+    //     .value_len  = p-head,
+    // };
+    // if(p != head)event_list_insert(list, &chardata_event);
     *next_pos = p;
     return flag;
 }

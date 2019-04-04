@@ -1,16 +1,19 @@
 CC = gcc
-DEBUGFLAGS = 
+DEBUGFLAGS = -g -O3 -DDEBUG
 PERFOMANCEFLAGS = -DPERFORMANCE
 CFLAGS = -I.
-PROCESS_NUM = 4
-FILE_NAME = test3.xml
+PROCESS_NUM = 8
+FILE_NAME = test1.xml
 OBJS = parse.o preprocess.o post_process.o psax.o pthread_barriers.o
 SERIALFLAGS = -DPARALLEL
 
-.PHONY: test
+.PHONY: test serial parallel
 
 test: testmain psax.a
 	./testmain $(PROCESS_NUM) $(FILE_NAME)
+
+serial:
+	make SERIALFLAGS=-DSERIAL
 
 testmain: testmain.c psax.a
 	$(CC) -o $@ psax.a testmain.c $(CFLAGS) $(DEBUGFLAGS) $(PERFOMANCEFLAGS)

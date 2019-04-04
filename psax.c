@@ -58,6 +58,7 @@ int psax_parse(int thread_num, event_handler_t event_handler, error_handler_t er
     open_file(filename, &glo);
     
 #ifdef SERIAL
+    glo.np = 1;
     event_list_t list;
     event_list_init(&list);
     char* a = glo.file_buf;

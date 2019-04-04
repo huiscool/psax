@@ -1,0 +1,5 @@
+testmain
+testmain.dSYM/
+.vscode/
+.DS_Store
+*.a
