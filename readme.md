@@ -1,13 +1,6 @@
 # PSAX
 
-
-<<<<<<< HEAD
 利用posix pthread库的事件驱动式的并行XML解析器😏
-=======
->>>>>>> add .gitignore
-
-
-
 
 ## SAX(Simple API for XML)主要特性
 
